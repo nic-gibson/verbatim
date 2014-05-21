@@ -500,7 +500,7 @@
 
 				<!-- output if not in our suppressed list -->
 				<xsl:if test="not($uri = $suppressed-namespaces)">
-					<xsl:apply-templates select="$node" mode="render-verbatim-ns-declaration">
+					<xsl:apply-templates select="$node" mode="verbatim:render-ns-declaration">
 						<xsl:with-param name="prefix" select="." tunnel="yes"/>
 					</xsl:apply-templates>
 				</xsl:if>
@@ -516,7 +516,7 @@
 			<xd:p>Renders an individual namespace declaration.</xd:p>
 		</xd:desc>
 	</xd:doc>
-	<xsl:template match="*" mode="render-verbatim-ns-declaration">
+	<xsl:template match="*" mode="verbatim:render-ns-declaration">
 		<xsl:param name="prefix" as="xs:string" tunnel="yes"/>
 		<xsl:variable name="uri" select="namespace-uri-for-prefix($prefix, .)" />
 		
@@ -1004,18 +1004,18 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Return true if an element has non whitespace only text children and false
+			<xd:p>Return true if an element has any non whitespace only text children and false
 			otherwise.</xd:p></xd:desc>
 	</xd:doc>
 	<xsl:function name="verbatim:meaningful-text-children" as="xs:boolean">
 		<xsl:param name="node" as="element()"/>
-		<xsl:value-of select="every $x in $node/child::text() satisfies not(normalize-space($x) = '')"/>
+		<xsl:value-of select="if ($node/text()) then some $x in $node/child::text() satisfies not(normalize-space($x) = '') else false()"/>
 	</xsl:function>
 	
 	
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Return true if an element has non whitespace only text siblings and false
+			<xd:p>Return true if an element has any text siblings that do not contain whitespace and false
 			otherwise.</xd:p>
 		</xd:desc>
 	</xd:doc>

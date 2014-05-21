@@ -5,7 +5,7 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs verbatim xd">
 	
 	<xsl:import href="verbatim-base.xsl"/>
-			
+		
 		
 	<xd:doc scope="stylesheet">
 			<xd:desc>
@@ -30,7 +30,7 @@
 				<xd:p>Copyright 2013 Corbas Consulting Ltd</xd:p>
 				<xd:p>Contact: corbas@corbas.co.uk</xd:p>
 				
-				<xd:p>XML to "escaped" html with configurability. Generates XHTML with styling and
+				<xd:p>XML to "escaped" xhtml with configurability. Generates XHTML with styling and
 					override options through modularity. </xd:p>
 				
 				<xd:p>
@@ -62,11 +62,20 @@
 					must contact Corbas Consulting Ltd by email at corbas@corbas.co.uk.</xd:p>
 				
 			</xd:desc>
+		
+			<xd:param name="verbatim:element-class">The CSS class name to be applied to spans wrapping
+			entire elements. Defaults to <xd:i>verbatim-element</xd:i></xd:param>
 			
 		</xd:doc>
 		
 	<xsl:output method="xhtml" omit-xml-declaration="yes" indent="no"/>
 
+	<xsl:param name="verbatim:element-class" select="'verbatim-element'"/>
+	
+	<xd:doc><xd:desc><xd:p>Wrap elements in element spans.</xd:p></xd:desc></xd:doc>
+	<xsl:template match="*" mode="verbatim:node">
+		<span class="{$verbatim:element-class}"><xsl:next-match/></span>
+	</xsl:template>
 
 	<xd:doc>
 		<xd:desc><xd:p>Output the namespace prefix for an element that
@@ -93,7 +102,7 @@
 			<xd:p>Renders an individual namespace declaration.</xd:p>
 		</xd:desc>
 	</xd:doc>
-	<xsl:template match="*" mode="render-verbatim-ns-declaration">
+	<xsl:template match="*" mode="verbatim:render-ns-declaration">
 		<span class="verbatim-ns-name">
 			<xsl:next-match/>
 		</span>
