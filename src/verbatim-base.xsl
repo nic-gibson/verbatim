@@ -168,7 +168,16 @@
 
 	<!--  used to find new lines -->
 	<xsl:variable name="nl" select="'&#xA;'" as="xs:string"/>
-
+	
+	
+	<!-- greater than -->
+	<xsl:variable name="greater-than" select="'&gt;'"/>
+	
+	<!-- less than -->
+	<xsl:variable name="less-than" select="'&lt;'"/>
+	
+	<!-- double quote -->
+	<xsl:variable name="double-quote" select="'&quot;'"/>
 
 	<xd:doc>
 		<xd:desc>
@@ -342,7 +351,9 @@
 		<xsl:next-match/>
 
 		<!-- close the start tag -->
-		<xsl:text>&gt;</xsl:text>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="$greater-than"/>
+		</xsl:call-template>		
 		
 		<!-- line break -->
 		<xsl:apply-templates select="." mode="verbatim:potential-break"/>
@@ -361,8 +372,10 @@
 		<xsl:next-match/>
 		
 		<!-- close the start tag -->
-		<xsl:text>&gt;</xsl:text>
-				
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="$greater-than"/>
+		</xsl:call-template>		
+		
 	</xsl:template>
 	
 	<xd:doc>
@@ -378,7 +391,10 @@
 		<xsl:apply-templates select="." mode="verbatim:potential-indent"/>
 		
 		<!-- start tag -->
-		<xsl:text>&lt;</xsl:text>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="$less-than"/>
+		</xsl:call-template>		
+		
 		
 		<!-- element name -->
 		<xsl:apply-templates select="." mode="verbatim:name"/>
@@ -414,10 +430,16 @@
 		<xsl:apply-templates select="." mode="verbatim:potential-indent"/>
 
 		<!-- output closing tag with prefix if required -->
-		<xsl:text>&lt;/</xsl:text>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="$less-than"/>
+		</xsl:call-template>		
+		
 		<xsl:apply-templates select="." mode="verbatim:name"/>
-		<xsl:text>&gt;</xsl:text>
-
+		
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="$greater-than"/>
+		</xsl:call-template>		
+		
 		<xsl:apply-templates select="." mode="verbatim:potential-break"/>
 
 	</xsl:template>
@@ -450,7 +472,9 @@
 	</xd:doc>
 	<xsl:template match="@*[not(local-name() = name())]" mode="verbatim:ns-prefix">
 		<xsl:value-of select="verbatim:namespace-prefix(parent::*)"/>
-		<xsl:text>:</xsl:text>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="':'"/>
+		</xsl:call-template>		
 	</xsl:template>
 	
 
@@ -518,13 +542,42 @@
 	</xd:doc>
 	<xsl:template match="*" mode="verbatim:render-ns-declaration">
 		<xsl:param name="prefix" as="xs:string" tunnel="yes"/>
-		<xsl:variable name="uri" select="namespace-uri-for-prefix($prefix, .)" />
+		<xsl:variable name="uri" select="namespace-uri-for-prefix($prefix, .)" as="xs:anyURI"/>
 		
-		<xsl:value-of
-			select="concat(' xmlns', if ($prefix = '') then '' else concat(':', $prefix), '=&quot;', $uri, '&quot; ')"/>
-
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="if ($prefix) then ' xmlns:' else 'xmlns'"/>
+		</xsl:call-template>
+		<xsl:call-template name="verbatim:render-ns-prefix">
+			<xsl:with-param name="prefix" select="$prefix"/>
+		</xsl:call-template>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="'=&quot;'"/>
+		</xsl:call-template>
+		<xsl:call-template name="verbatim:render-ns-name">
+			<xsl:with-param name="name" select="$uri"/>
+		</xsl:call-template>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="'&quot; '"/>
+		</xsl:call-template>
+		
 	</xsl:template>
-
+	
+	<xd:doc>
+		<xd:desc>Render a namespace declaration's prefix</xd:desc>
+	</xd:doc>
+	<xsl:template name="verbatim:render-ns-prefix">
+		<xsl:param name="prefix" as="xs:string"/>
+		<xsl:value-of select="$prefix"/>
+	</xsl:template>
+	
+	<xd:doc>
+		<xd:desc>Render a namespace declaration's name</xd:desc>
+	</xd:doc>
+	<xsl:template name="verbatim:render-ns-name">
+		<xsl:param name="name" as="xs:anyURI"/>
+		<xsl:value-of select="$name"/>
+	</xsl:template>
+	
 	<xd:doc>
 		<xd:desc>Generate a namespace declaration for those elements where the parent is in a
 			namespace but the current node isn't</xd:desc>
@@ -770,7 +823,7 @@
 			if it is.</xd:desc>
 	</xd:doc>
 	<xsl:template match="node()" mode="verbatim:potential-break">
-		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes"/>
+		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes"  select="false()"/>
 		<xsl:if test="$indent-elements">
 			<xsl:apply-templates select="." mode="verbatim:break"/>
 		</xsl:if>
@@ -796,9 +849,13 @@
 			<xd:p>Determine if an indent is required and call the indentation template
 				if it is.</xd:p>
 		</xd:desc>
+		<xd:param name="indent-elements">
+			<xd:p>Controls whether or not elements are indented as nesting increases. Tunneled from
+			starting template.</xd:p>
+		</xd:param>
 	</xd:doc>
 	<xsl:template match="node()" mode="verbatim:potential-indent">
-		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes"/>
+		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes" select="false()"/>
 		<xsl:if test="$indent-elements">
 			<xsl:apply-templates select="." mode="verbatim:indent"/>
 		</xsl:if>
@@ -823,6 +880,16 @@
 		<xsl:value-of select="verbatim:indent($indent, $indent-string, $indent-increment)"/>
 	</xsl:template>
 	
+	
+	<xd:doc>
+		<xd:desc><xd:p>This is a placeholder template that allows the basic syntax (angle brackets, 
+		quotes, etc) to be overridden.</xd:p></xd:desc>
+	</xd:doc>
+	<xsl:template name="verbatim:decorate">
+		<xsl:param name="text" as="xs:string"/>
+		<xsl:value-of select="$text"/>
+	</xsl:template>
+	
 
 	<xd:doc>
 		<xd:desc>
@@ -830,6 +897,12 @@
 				$keep-words. Note that if $max-words is less than or equal to double $keep-words we keep all the words.
 			If $keep-words is less than or equal to zero, we treat it as one.</xd:p>
 		</xd:desc>
+		<xd:param name="text">The text to be potentially limited</xd:param>
+		<xd:param name="max-words">The maximum number of words allowed</xd:param>
+		<xd:param name="keep-words">The number of words to be retained either side of the ellipsis. Not that if
+		double <xd:i>$keep-words</xd:i> is double or mare than <xd:i>$max-words</xd:i> then the whole string is returned.</xd:param>
+		<xd:param name="ellipsis-string">The string to be used for ellipsis.</xd:param>
+		<xd:return>A string of words, either the same as <xd:i>$text</xd:i> or shortened.</xd:return>
 	</xd:doc>
 	<xsl:function name="verbatim:limit-text" as="xs:string">
 		<xsl:param name="text" as="item()"/>
@@ -859,7 +932,7 @@
 		<xd:desc>
 			<xd:p>This function replaces all occurrences of ampersand, less than and greater than,
 				with entities. If the <xd:i>with-attrs</xd:i> parameter is set then the value is
-				assumed to in an attribute and quotes are replaced as well. </xd:p>
+				assumed to an attribute value and quotes are replaced as well. </xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:function name="verbatim:html-replace-entities">
