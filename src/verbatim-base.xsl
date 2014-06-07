@@ -169,6 +169,8 @@
 	<!--  used to find new lines -->
 	<xsl:variable name="nl" select="'&#xA;'" as="xs:string"/>
 	
+	<!-- a single space -->
+	<xsl:variable name="space" select="'&#x20;'"/>
 	
 	<!-- greater than -->
 	<xsl:variable name="greater-than" select="'&gt;'"/>
@@ -403,7 +405,7 @@
 		<xsl:apply-templates select="." mode="verbatim:ns-declarations"/>
 		
 		<!-- attributes -->
-		<xsl:apply-templates select="@*" mode="verbatim:attributes"/>
+		<xsl:apply-templates select="@*" mode="verbatim:node"/>
 				
 	</xsl:template>
 
@@ -431,7 +433,7 @@
 
 		<!-- output closing tag with prefix if required -->
 		<xsl:call-template name="verbatim:decorate">
-			<xsl:with-param name="text" select="$less-than"/>
+			<xsl:with-param name="text" select="concat($less-than, '/')"/>
 		</xsl:call-template>		
 		
 		<xsl:apply-templates select="." mode="verbatim:name"/>
@@ -471,7 +473,7 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="@*[not(local-name() = name())]" mode="verbatim:ns-prefix">
-		<xsl:value-of select="verbatim:namespace-prefix(parent::*)"/>
+		<xsl:value-of select="verbatim:namespace-prefix(., parent::*)"/>
 		<xsl:call-template name="verbatim:decorate">
 			<xsl:with-param name="text" select="':'"/>
 		</xsl:call-template>		
@@ -511,8 +513,7 @@
 
 		<xsl:if test="$suppress-ns-declarations = false()">
 
-
-			<!-- get all prefixes which were declared on this node -->
+			<!-- get all prefixes which were declared on this node, removing suppressed ones -->
 			<xsl:variable name="namespace-prefixes" select="verbatim:newly-declared-prefixes(.)"
 				as="xs:string*"/>
 
@@ -545,7 +546,7 @@
 		<xsl:variable name="uri" select="namespace-uri-for-prefix($prefix, .)" as="xs:anyURI"/>
 		
 		<xsl:call-template name="verbatim:decorate">
-			<xsl:with-param name="text" select="if ($prefix) then ' xmlns:' else 'xmlns'"/>
+			<xsl:with-param name="text" select="if ($prefix) then ' xmlns:' else ' xmlns'"/>
 		</xsl:call-template>
 		<xsl:call-template name="verbatim:render-ns-prefix">
 			<xsl:with-param name="prefix" select="$prefix"/>
@@ -557,7 +558,7 @@
 			<xsl:with-param name="name" select="$uri"/>
 		</xsl:call-template>
 		<xsl:call-template name="verbatim:decorate">
-			<xsl:with-param name="text" select="'&quot; '"/>
+			<xsl:with-param name="text" select="'&quot;'"/>
 		</xsl:call-template>
 		
 	</xsl:template>
@@ -640,7 +641,7 @@
 			<xd:p>Process attributes. Each attribute is output with a space before it. </xd:p>
 		</xd:desc>
 	</xd:doc>
-	<xsl:template match="@*" mode="verbatim:attributes">
+	<xsl:template match="@*" mode="verbatim:node">
 
 		<!-- space -->
 		<xsl:text> </xsl:text>
@@ -653,7 +654,7 @@
 		<xsl:text>=&quot;</xsl:text>
 
 		<!-- value with entities escaped -->
-		<xsl:apply-templates select="." mode="verbatim:attribute-value"/>
+		<xsl:apply-templates select="." mode="verbatim:content"/>
 
 		<!-- end quote -->
 		<xsl:text>&quot;</xsl:text>
@@ -666,7 +667,7 @@
 			<xd:p>Render the value of an attribute</xd:p>
 		</xd:desc>
 	</xd:doc>
-	<xsl:template match="@*" mode="verbatim:attribute-value">
+	<xsl:template match="@*" mode="verbatim:content">
 		<xsl:value-of select="verbatim:html-replace-entities(normalize-space(.), true())"/>
 	</xsl:template>
 
@@ -963,20 +964,32 @@
 	</xd:doc>
 	<xsl:function name="verbatim:namespace-prefix" as="xs:string">
 
-		<xsl:param name="node" as="element()"/>
+		<xsl:param name="node" as="item()"/>
+		<xsl:param name="ns-source" as="element()"/>
 		<xsl:variable name="uri" select="namespace-uri($node)" as="xs:anyURI"/>
-		<xsl:variable name="prefixes" select="in-scope-prefixes($node)" as="xs:string*"/>
+		<xsl:variable name="prefixes" select="in-scope-prefixes($ns-source)" as="xs:string*"/>
 		<xsl:variable name="prefixes"
 			select="if (exists($uri) ) 
 			then for $ns in $prefixes 
 				 return 
-					(if (namespace-uri-for-prefix($ns, $node) = $uri) then $ns else ())
+					(if (namespace-uri-for-prefix($ns, $ns-source) = $uri) then $ns else ())
 			else ()"/>
 
 		<xsl:sequence select="if (exists($prefixes)) then $prefixes[1] else ''"/>
 
 	</xsl:function>
-
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>As above but with the second parameter defaulted.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:function name="verbatim:namespace-prefix" as="xs:string">
+		
+		<xsl:param name="node" as="item()"/>
+		<xsl:sequence select="verbatim:namespace-prefix($node, $node)"/>
+		
+	</xsl:function>	
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Return a sequence of namespace prefixes which were not declared on the parent
