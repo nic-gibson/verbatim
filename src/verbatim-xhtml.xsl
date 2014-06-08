@@ -248,7 +248,7 @@
 				case.</xd:p>
 		</xd:desc>
 	</xd:doc>
-	<xsl:template match="node()" mode="verbatim:break">
+	<xsl:template match="node()" mode="verbatim:break" name="verbatim:break">
 		<br/>
 	</xsl:template>
 
