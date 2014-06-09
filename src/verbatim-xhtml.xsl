@@ -170,9 +170,7 @@
 	</xd:doc>
 	<xsl:template match="*[not(namespace-uri())][namespace-uri(parent::*)]"
 		mode="verbatim:ns-declarations">
-		<span class="{$verbatim:ns-name-class}">
-			<xsl:text> xmlns=""</xsl:text>
-		</span>
+		<span class="{$verbatim:ns-name-class}"><xsl:next-match/></span>
 	</xsl:template>
 
 
@@ -189,7 +187,7 @@
 	<xd:doc>
 		<xd:desc>Render an attribute value</xd:desc>
 	</xd:doc>
-	<xsl:template match="@*" mode="verbatim:attribute-value">
+	<xsl:template match="@*" mode="verbatim:content">
 		<span class="{$verbatim:attribute-content-class}">
 			<xsl:next-match/>
 		</span>
@@ -203,9 +201,7 @@
 	</xd:doc>
 	<xsl:template match="text()" mode="verbatim:node">
 
-		<span class="verbatim-text">
-			<span class="{$verbatim:text-class}"><xsl:next-match/></span>
-		</span>
+		<span class="{$verbatim:text-class}"><xsl:next-match/></span>
 
 	</xsl:template>
 
@@ -216,7 +212,7 @@
 		</xd:desc>
 	</xd:doc>
 
-	<xsl:template match="comment()" mode="verbatim:comment-content">
+	<xsl:template match="comment()" mode="verbatim:content">
 		<span class="{$verbatim:comment-class}"><xsl:next-match/></span>
 	</xsl:template>
 

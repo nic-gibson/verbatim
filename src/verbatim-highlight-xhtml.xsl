@@ -78,14 +78,15 @@
 	<xsl:param name="verbatim:highlight-class" select="'verbatim-highlight'"/>
 	
 	<xsl:template match="node()" mode="verbatim">
-		<xsl:param name="highlight-xpath" as="xs:string"/>
-		<xsl:variable name="matching-nodes" select="saxon:evaluate($highlight-xpath, .)" as="item()*"/>
+		<xsl:param name="highlight-xpath" as="xs:string" select="''"/>
+		<xsl:variable name="matching-nodes" select="if ($highlight-xpath) then saxon:evaluate($highlight-xpath, .) else ()" as="item()*"/>
 		<xsl:next-match>
 			<xsl:with-param name="highlight-matching-nodes" select="$matching-nodes" tunnel="yes"/>
 		</xsl:next-match>
 	</xsl:template>
 	
-	<xsl:template match="node()" mode="verbatim:node">
+	<!-- precedence rules mean that we can't be totally generic here -->
+	<xsl:template match="*|@*|comment()|processing-instruction()|text()" mode="verbatim:node">
 		<xsl:param name="highlight-matching-nodes"  tunnel="yes" as="item()*"/>
 		<xsl:variable name="is-highlight" select="some $x in $highlight-matching-nodes satisfies $x is ."/>
 		<xsl:choose>
