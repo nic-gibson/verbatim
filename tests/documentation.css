@@ -1,0 +1,125 @@
+/* Stylesheet for documentation generator */
+
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,400,600,700);
+
+
+body
+{
+	border: 2em;
+	font-size: small;
+	background-color: rgb(250, 250, 250);
+	font-family: 'Open Sans', sans-serif;
+	margin-left: 2em;
+	margin-right: 2em;
+}
+
+p, td, code, li, pre
+{
+	font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6
+{
+	padding: 0;
+	margin: 0;
+	font-weight: normal;
+	text-decoration: none;
+	font-style: none;
+	font-size: medium;
+	margin-bottom: 0.5em;
+}
+
+h1
+{
+	font-size: large;
+	margin-left: -1em;
+	font-weight: bold;
+}
+
+h2
+{
+	font-weight: bold;	
+}
+
+
+h4
+{
+	font-weight: bold;
+	font-size: small;
+}
+
+h4.see-ref
+{
+	font-size: 90%;
+}
+
+
+p
+{
+	padding: 0;
+	margin-bottom: 0.5em;
+}
+
+p code
+{
+	padding-right: 0.25em;
+	padding-left: 0.25em;
+	border-radius: 8px;
+	background-color: rgb(220, 220, 220);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(220, 220, 220);
+	padding-top: 0;
+}
+
+
+div.license
+{
+	width: 60%;
+	margin-left: auto;
+	margin-right: auto;
+	font-family: 'Courier New', 'Courier', mono;
+}
+
+
+div.element
+{
+	border-radius: 8px;
+	background-color: rgb(220, 220, 220);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(220, 220, 220);
+	width: 90%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 1em;
+}
+
+
+/* verbatim xml output */
+div.verbatim
+{
+	border-radius: 8px;
+	background-color: rgb(220, 220, 220);
+	border-style: solid;
+	border-width: 1px;
+	border-color: black;
+	width: 90%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 1em;
+	padding: 0.5em;
+	padding-top: 0;
+}
+
+.verbatim-element-name     { color: #990000 }
+.verbatim-element-nsprefix { color: #666600 }
+.verbatim-attr-name        { color: #660000 }
+.verbatim-attr-content     { color: #000099 }
+.verbatim-ns-name          { color: #666600 }
+.verbatim-ns-uri           { color: #330099 }
+.verbatim-text             { color: #000000 }
+.verbatim-comment          { color: #006600; font-style: italic }
+.verbatim-pi-name          { color: #006600; font-style: italic }
+.verbatim-pi-content       { color: #006666; font-style: italic }
+.verbatim-highlight		   { background-color: yellow }

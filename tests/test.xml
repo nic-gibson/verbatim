@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xml:id="testdoc">
+	<child xmlns="http://www.corbas.co.uk/ns/test">Text <conj>and</conj> Content</child>
+	<child>
+		<grandchild test="1"/>
+	</child>
+</root>

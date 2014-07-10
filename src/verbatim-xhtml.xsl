@@ -123,6 +123,11 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*" mode="verbatim:node">
+		
+		<xsl:message>Kids: <xsl:value-of select="verbatim:meaningful-text-children(.)"/></xsl:message>
+		<xsl:message>Sibs: <xsl:value-of select="verbatim:meaningful-text-siblings(.)"/></xsl:message>
+		<xsl:message>Following Sibs: <xsl:value-of select="verbatim:meaningful-following-siblings(.)"/></xsl:message>
+		
 		<span class="{$verbatim:element-class}">
 			<xsl:next-match/>
 		</span>
@@ -200,9 +205,16 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="text()" mode="verbatim:node">
+		
+		<!-- capture this because we don't want to generate an empty span -->
+		<xsl:variable name="content">
+			<xsl:next-match/>
+		</xsl:variable>
 
-		<span class="{$verbatim:text-class}"><xsl:next-match/></span>
-
+		<xsl:if test="not(normalize-space($content) = '')">
+			<span class="{$verbatim:text-class}"><xsl:value-of select="$content"/></span>
+		</xsl:if>
+		
 	</xsl:template>
 
 

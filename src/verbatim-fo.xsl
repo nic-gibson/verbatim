@@ -1,451 +1,261 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!--
-    XML to XSL FO Verbatim Formatter with Syntax Highlighting
-    
-    Version 2.0
-   	Contributors: Nic Gibson
-   	Copyright 2013 Corbas Consulting Ltd
-	Contact: corbas@corbas.co.uk
-
-   	Full rewrite of Oliver Becker's original code to modularise for reuseability 
-   	and rewrite to XSLT 2.0. Code for handling the root element removed as the
-   	purpose of the rewrite is to handle code snippets. Modularisation and extensive
-   	uses of modes used to ensure that special purpose usages can be achieved
-	through use of xsl:import.
-   	
-    
-    Version 1.1
-    Contributors: Doug Dicks, added auto-indent (parameter indent-elements)
-                  for pretty-print
-
-    Copyright 2002 Oliver Becker
-    ob@obqo.de
- 
-    Licensed under the Apache License, Version 2.0 (the "License"); 
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-    Unless required by applicable law or agreed to in writing, software distributed
-    under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-    CONDITIONS OF ANY KIND, either express or implied. See the License for the
-    specific language governing permissions and limitations under the License.
-
-    Alternatively, this software may be used under the terms of the 
-    GNU Lesser General Public License (LGPL).
--->
-
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-	xmlns:fo="http://www.w3.org/1999/XSL/Format"
-	xmlns:cfn="http://www.corbas.co.uk/ns/xsl/functions" 
-	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs cfn">
-
-	<xsl:output method="xhtml" omit-xml-declaration="yes" indent="no"/>
-
-	<xsl:param name="indent-elements" select="false()"/>
-	<xsl:param name="max-depth" select="10000"/>
-	<xsl:param name="limit-text" select="true()"/>
+	xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl"
+	xmlns:cfn="http://www.corbas.co.uk/ns/xsl/functions" xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim" 
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs cfn xd verbatim">
 	
-	<xsl:param name="suppress-ns-declarations-default" select="false()"/>
-
-	<xsl:variable name="tab" select="'&#x9;'"/>
-	<xsl:variable name="tab-out" select="'&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;'"/>
-	<xsl:variable name="nbsp" select="'&#xA0;'"/>
-	<xsl:variable name="nl" select="'&#xA;'"/>
-	<xsl:param name="indent-increment" select="'&#xA0;&#xA0;&#xA0;'"/>
+	<xsl:import href="verbatim-base.xsl"/>
 	
+	<xd:doc scope="stylesheet">
+		<xd:desc>
+			
+			<xd:b>
+				<xd:b>XML Verbatim FO Highlighter</xd:b>
+			</xd:b>
+			
+			<xd:p>
+				<xd:i>Version 1.0</xd:i>
+			</xd:p>
+			<xd:p>Contributors: Nic Gibson</xd:p>
+			<xd:p>Copyright 2014 Corbas Consulting Ltd</xd:p>
+			<xd:p>Contact: corbas@corbas.co.uk</xd:p>
+			
+			
+			<xd:p>XML to "escaped" XSL-FO with configurability. Generates XSL-FO with styling and
+				override options through modularity. This stylesheet layers on the standard
+				xhtml stylesheet to add the facility to provide an XPath statement as a string
+				for evaluation.</xd:p>
+
+			
+			<xd:p>
+				<xd:b>License Terms</xd:b>
+			</xd:p>
+			
+			<xd:p>This program and accompanying files are copyright 2014 Corbas Consulting
+				Ltd.</xd:p>
+			
+			<xd:p>This program is free software: you can redistribute it and/or modify it under the
+				terms of the GNU General Public License as published by the Free Software
+				Foundation, either version 3 of the License, or (at your option) any later
+				version.</xd:p>
+			
+			<xd:p>This program is distributed in the hope that it will be useful, but WITHOUT ANY
+				WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+				PARTICULAR PURPOSE. See the GNU General Public License for more details.</xd:p>
+			
+			<xd:p>You should have received a copy of the GNU General Public License along with this
+				program. If not, see http://www.gnu.org/licenses/.</xd:p>
+			
+			<xd:p>
+				<xd:b>Corbas Consulting Clients and Customers</xd:b>
+			</xd:p>
+			
+			<xd:p>If your organisation or company are a customer or client of Corbas Consulting Ltd
+				you may be able to use and/or distribute this software under a different license. If
+				you are not aware of any such agreement and wish to agree other license terms you
+				must contact Corbas Consulting Ltd by email at corbas@corbas.co.uk.</xd:p>
+			
+		</xd:desc>
+		
+		
+	</xd:doc>
+
 	
 	<!-- When we write out FO we don't have the CSS to handle this so it has to be here -->
-	<xsl:attribute-set name="verbatim-default">
+	<xsl:attribute-set name="verbatim:fo-defaults" >
 		<xsl:attribute name="color">#333333</xsl:attribute>
 		<xsl:attribute name="font-family">monospace</xsl:attribute>
 		<xsl:attribute name="font-size">90%</xsl:attribute>
-		<xsl:attribute name="margin-bottom">1em</xsl:attribute>
 	</xsl:attribute-set>
 
-	<xsl:attribute-set name="verbatim-element-name">
+	<xsl:attribute-set name="verbatim:fo-element-name">
 		<xsl:attribute name="color">#990000</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-element-nsprefix">
+	<xsl:attribute-set name="verbatim:fo-element-nsprefix">
 		<xsl:attribute name="color">#666600</xsl:attribute>
 	</xsl:attribute-set>
 
-	<xsl:attribute-set name="verbatim-element-name">
+	<xsl:attribute-set name="verbatim:fo-element-name">
 		<xsl:attribute name="color">#990000</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-attr-name">
+	<xsl:attribute-set name="verbatim:fo-attr-name">
 		<xsl:attribute name="color">#660000</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-attr-content">
+	<xsl:attribute-set name="verbatim:fo-attr-content">
 		<xsl:attribute name="color">#000099</xsl:attribute>
 		<xsl:attribute name="font-weight">bold</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-ns-name">
+	<xsl:attribute-set name="verbatim:fo-ns-prefix">
 		<xsl:attribute name="color">#666600</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-ns-uri">
+	<xsl:attribute-set name="verbatim:fo-ns-uri">
 		<xsl:attribute name="color">#330099</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-text">
+	<xsl:attribute-set name="verbatim:fo-text">
 		<xsl:attribute name="color">#000000</xsl:attribute>
 		<xsl:attribute name="font-weight">bold</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-comment">
+	<xsl:attribute-set name="verbatim:fo-comment">
 		<xsl:attribute name="color">#006600</xsl:attribute>
 		<xsl:attribute name="font-style">italic</xsl:attribute>
 	</xsl:attribute-set>
 	
-	<xsl:attribute-set name="verbatim-pi-name">
+	<xsl:attribute-set name="verbatim:fo-pi-name">
 		<xsl:attribute name="color">#006600</xsl:attribute>
 		<xsl:attribute name="font-style">italic</xsl:attribute>
 	</xsl:attribute-set>
 
-	<xsl:attribute-set name="verbatim-pi-content">
+	<xsl:attribute-set name="verbatim:fo-pi-content">
 		<xsl:attribute name="color">#006666</xsl:attribute>
 		<xsl:attribute name="font-style">italic</xsl:attribute>
 	</xsl:attribute-set>
-
-	<!-- element nodes -->
-	<xsl:template match="*" mode="verbatim">
-
-		<xsl:param name="indent" select="''"/>
-		<xsl:param name="depth" select="$max-depth"/>
-		<xsl:param name="suppress-ns-declarations" select="$suppress-ns-declarations-default"/>
-		
-		<fo:block>
-
-		<xsl:apply-templates select="." mode="verbatim-start">
-			<xsl:with-param name="suppress-ns-declarations" select="$suppress-ns-declarations"/>
-			<xsl:with-param name="indent" select="$indent"/>
-		</xsl:apply-templates>
-
-		<xsl:apply-templates select="." mode="verbatim-content">
-			<xsl:with-param name="indent" select="$indent"/>
-			<xsl:with-param name="depth" select="$depth"/>
-		</xsl:apply-templates>
-
-		<xsl:apply-templates select="." mode="verbatim-end">
-			<xsl:with-param name="indent" select="$indent"/>
-		</xsl:apply-templates>
-
-		<xsl:if test="not(parent::*)">
-			<fo:block/>
-		</xsl:if>
-			
+	
+	<xsl:attribute-set name="verbatim:fo-indent-class"/>
+	<xsl:attribute-set name="verbatim:fo-element"/>
+	
+	<xd:doc>
+		<xd:desc>Output a block around the output</xd:desc>
+	</xd:doc>
+	<xsl:template match="node()" mode="verbatim:initial-node">
+		<fo:block xsl:use-attribute-sets="verbatim:fo-defaults">
+			<xsl:next-match/>
 		</fo:block>
-
 	</xsl:template>
+			
+	
 
-
-	<xsl:template match="*" mode="verbatim-start">
-		<xsl:param name="indent" select="''"/>
-		<xsl:param name="suppress-ns-declarations" select="$suppress-ns-declarations-default"/>
-
-		<xsl:if test="$indent-elements">
-			<xsl:value-of select="$indent"/>
-		</xsl:if>
-
-		<xsl:text>&lt;</xsl:text>
-		<xsl:apply-templates select="." mode="verbatim-ns-prefix"/>
-		<xsl:apply-templates select="." mode="verbatim-element-name"/>
-		<xsl:if test="$suppress-ns-declarations = false()">
-			<xsl:apply-templates select="." mode="verbatim-ns-declarations"/>
-		</xsl:if>
-		<xsl:apply-templates select="@*" mode="verbatim-attributes"/>
-
-		<xsl:if test="node()">
-			<xsl:text>&gt;</xsl:text>
-		</xsl:if>
-
-	</xsl:template>
-
-
-	<xsl:template match="*[not(node())]" mode="verbatim-end">
-		<xsl:text> /&gt;</xsl:text>
-	</xsl:template>
-
-	<xsl:template match="*[node()]" mode="verbatim-end">
-
-		<xsl:param name="indent" select="''"/>
-
-		<xsl:if test="* and $indent-elements">
-			<xsl:value-of select="$indent"/>
-		</xsl:if>
-
-		<xsl:text>&lt;/</xsl:text>
-		<xsl:apply-templates select="." mode="verbatim-ns-prefix"/>
-		<xsl:apply-templates select="." mode="verbatim-element-name"/>
-		<xsl:text>&gt;</xsl:text>
-
-	</xsl:template>
-
-	<xsl:template match="*[not(cfn:namespace-prefix(.) = '')]" mode="verbatim-ns-prefix">
-		<xsl:variable name="ns" select="cfn:namespace-prefix(.)"/>
-		<fo:inline xsl:use-attribute-sets="verbatim-element-nsprefix">
-			<xsl:value-of select="cfn:namespace-prefix(.)"/>
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Output the namespace prefix for an element that actually has one.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="*[not(local-name() = name())]" mode="verbatim:ns-prefix">
+		<fo:inline xsl:use-attribute-sets="verbatim:fo-ns-prefix">
+			<xsl:next-match/>
 		</fo:inline>
-		<xsl:text>:</xsl:text>
 	</xsl:template>
+	
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Output the element name itself</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="*" mode="verbatim:name">
+		<fo:inline  xsl:use-attribute-sets="verbatim:fo-element-name">
+			<xsl:next-match/>
+		</fo:inline>
+	</xsl:template>	
 
-	<xsl:template match="*" mode="verbatim-ns-prefix"/>
 
-	<xsl:template match="*" mode="verbatim-element-name">
-		<fo:inline xsl:use-attribute-sets="verbatim-element-name">
-			<xsl:value-of select="local-name()"/>
+
+
+	<xd:doc>
+		<xd:desc>Render an attribute name</xd:desc>
+	</xd:doc>
+	<xsl:template match="@*" mode="verbatim:name">
+		<fo:inline  xsl:use-attribute-sets="verbatim:fo-attr-name">
+			<xsl:next-match/>
+		</fo:inline>
+	</xsl:template>
+	
+	
+	<xd:doc>
+		<xd:desc>Render an attribute value</xd:desc>
+	</xd:doc>
+	<xsl:template match="@*" mode="verbatim:content">
+		<fo:inline  xsl:use-attribute-sets="verbatim:fo-attr-content">
+			<xsl:next-match/>
 		</fo:inline>
 	</xsl:template>
 
-	<xsl:template match="*" mode="verbatim-ns-declarations">
-		<xsl:variable name="node" select="."/>
-		<xsl:variable name="namespace-prefixes" select="cfn:newly-declared-namespaces(.)" as="xs:string*"/>
-
-			<xsl:for-each select="$namespace-prefixes">
-				<xsl:variable name="uri" select="namespace-uri-for-prefix(., $node)"/>
-				<fo:inline xsl:use-attribute-sets="verbatim-ns-name">
-					<xsl:value-of
-						select="concat(' xmlns', if (. = '') then '' else concat(':', .), '=&quot;', $uri, '&quot;')"
-					/>
-				</fo:inline>
-			</xsl:for-each>
-	</xsl:template>
-
-	<xsl:template match="*[node()]" mode="verbatim-content">
-
-		<xsl:param name="depth"/>
-		<xsl:param name="indent"/>
-
-		<xsl:choose>
-
-			<xsl:when test="$depth gt 0">
-				<xsl:apply-templates mode="verbatim">
-					<xsl:with-param name="indent" select="concat($indent, $indent-increment)"/>
-					<xsl:with-param name="depth" select="$depth - 1"/>
-				</xsl:apply-templates>
-
-			</xsl:when>
-
-
-			<xsl:otherwise>
-				<xsl:text> … </xsl:text>
-			</xsl:otherwise>
-
-		</xsl:choose>
-
-
-	</xsl:template>
-
-	<xsl:template match="*[not(node())]" mode="verbatim-content"/>
-
-	<xsl:template match="@*" mode="verbatim-attributes">
-		<xsl:text> </xsl:text>
-		<fo:inline xsl:use-attribute-sets="verbatim-attr-name">
-			<xsl:value-of select="name()"/>
-		</fo:inline>
-		<xsl:text>=&quot;</xsl:text>
-		<fo:inline xsl:use-attribute-sets="verbatim-attr-content">
-			<xsl:value-of select="cfn:html-replace-entities(normalize-space(.), true())"/>
-		</fo:inline>
-		<xsl:text>&quot;</xsl:text>
-	</xsl:template>
-
-	<xsl:template match="@*" mode="verbatim-id-copy">
-		<xsl:attribute name="id" select="."/>
-	</xsl:template>
-
-	<xsl:template match="text()" mode="verbatim">
-
-		<fo:inline xsl:use-attribute-sets="verbatim-text">
-			<xsl:call-template name="preformatted-output">
-				<xsl:with-param name="text"
-					select="if ($limit-text = true()) 
-					then cfn:html-replace-entities(cfn:limit-text(.))
-					else cfn:html-replace-entities(.)"
-				/>
-			</xsl:call-template>
-		</fo:inline>
-
-	</xsl:template>
-
-	<xsl:template match="text()[contains(., $nl)]" mode="verbatim">
-		<fo:inline xsl:use-attribute-sets="verbatim-text">
-			<xsl:value-of select="cfn:html-replace-entities(cfn:limit-text(.))"/>
-		</fo:inline>
-	</xsl:template>
-
-	<!-- comments -->
-	<xsl:template match="comment()" mode="verbatim">
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Process text. Potentially replaces entities and restricts the amount of output
+				text. Newlines are replaced with breaks.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="text()" mode="verbatim:node">
 		
-		<xsl:param name="indent" select="''"/>
+		<!-- capture this because we don't want to generate an empty span -->
+		<xsl:variable name="content">
+			<xsl:next-match/>
+		</xsl:variable>
 		
-		<xsl:if test="$indent-elements">
-			<xsl:value-of select="$indent"/>
+		<xsl:if test="not(normalize-space($content) = '')">
+			<fo:inline xsl:use-attribute-sets="verbatim:fo-text"><xsl:next-match/></fo:inline>
 		</xsl:if>
 		
-		<xsl:text>&lt;!--</xsl:text>
-		<fo:inline xsl:use-attribute-sets="verbatim-comment">
-			<xsl:call-template name="preformatted-output">
-				<xsl:with-param name="text" select="."/>
-			</xsl:call-template>
-		</fo:inline>
-		<xsl:text>--&gt;</xsl:text>
-		<xsl:if test="not(parent::*)">
-			<xsl:text>&#xA;</xsl:text>
-		</xsl:if>
 	</xsl:template>
 
-	<!-- processing instructions -->
-	<xsl:template match="processing-instruction()" mode="verbatim">
-		<xsl:text>&lt;?</xsl:text>
-		<fo:inline xsl:use-attribute-sets="verbatim-pi-name">
-			<xsl:value-of select="name()"/>
+
+
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Output the body of a comment wrapped in an fo:inline</xd:p>
+		</xd:desc>
+	</xd:doc>
+	
+	<xsl:template match="comment()" mode="verbatim:content">
+		<fo:inline xsl:use-attribute-sets="verbatim:fo-comment"><xsl:next-match/></fo:inline>
+	</xsl:template>
+
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Output processing instruction body, wrapped in an fo:inline.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="processing-instruction()" mode="verbatim:content">
+		<fo:inline xsl:use-attribute-sets="verbatim:fo-pi-content">
+			<xsl:next-match/>
 		</fo:inline>
-		<xsl:if test=".!=''">
-			<xsl:text> </xsl:text>
-			<fo:inline xsl:use-attribute-sets="verbatim-pi-content">
-				<xsl:value-of select="."/>
+	</xsl:template>
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Output processing instruction name, wrapped in an fo:inline.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="processing-instruction()" mode="verbatim:name">
+		<fo:inline xsl:use-attribute-sets="verbatim:fo-pi-name">
+			<xsl:next-match/>
+		</fo:inline>
+	</xsl:template>	
+
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Write out a break as appropriate for the output type -  a block node in this
+				case.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="node()" mode="verbatim:break" name="verbatim:break">
+		<fo:block/>
+	</xsl:template>
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Write out an indent wrapped in a span. Holds the result of next-match
+				in a variable so that we can suppress empty results.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="node()" mode="verbatim:indent">
+		<xsl:variable name="content" as="xs:string">
+			<xsl:next-match/>
+		</xsl:variable>
+		<xsl:if test="not($content = '')">
+			<fo:inline xsl:use-attribute-sets="verbatim:fo-indent-class">
+				<xsl:next-match/>
 			</fo:inline>
-		</xsl:if>
-		<xsl:text>?&gt;</xsl:text>
-		<xsl:if test="not(parent::*)">
-			<xsl:text>&#xA;</xsl:text>
-		</xsl:if>
+		</xsl:if>	
 	</xsl:template>
 
 
-	<!-- =========================================================== -->
-	<!--                    Procedures / Functions                   -->
-	<!-- =========================================================== -->
-
-
-
-
-
-	<!-- preformatted output: space as &nbsp;, tab as 8 &nbsp;
-                             nl as <br> -->
-	<xsl:template name="preformatted-output">
-		<xsl:param name="text"/>
-		<xsl:call-template name="output-nl">
-			<xsl:with-param name="text" select="replace(replace($text, $tab, $tab-out), ' ', $nbsp)"
-			/>
-		</xsl:call-template>
-	</xsl:template>
-
-	<!-- output nl as <br> -->
-	<xsl:template name="output-nl">
-		<xsl:param name="text"/>
-		<xsl:variable name="tokens" select="tokenize($text, '&#xA;')"/>
-		<xsl:choose>
-			<xsl:when test="count($tokens) = 1">
-				<xsl:value-of select="$tokens"/>
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:for-each select="$tokens">
-					<xsl:value-of select="."/>
-				</xsl:for-each>
-			</xsl:otherwise>
-		</xsl:choose>
-	</xsl:template>
-
-
-
-	<!-- restrict text where we have more than 50 words to first five,
-   ellipsis and last five -->
-	<xsl:function name="cfn:limit-text">
-		<xsl:param name="text"/>
-		<xsl:variable name="words" select="tokenize($text, '\s+')" as="xs:string*"/>
-		<xsl:variable name="nwords" select="count($words)" as="xs:integer"/>
-		<xsl:value-of
-			select="if ($nwords lt 50) 
-   			then $words else 
-   			string-join((
-   				for $n in 1 to 5 return $words[$n], 
-   				' … ', 
-   				for $n in $nwords - 5 to $nwords return $words[$n]), 
-   				' ')"
-		/>
-	</xsl:function>
-
-	<xsl:function name="cfn:html-replace-entities">
-		<xsl:param name="value"/>
-		<xsl:param name="with-attrs"/>
-		<xsl:variable name="tmp"
-			select="
-			replace(replace(replace($value, '&amp;', '&amp;amp;'),'&lt;', '&amp;lt;'),'&gt;', '&amp;gt;')"/>
-		<xsl:value-of
-			select="if ($with-attrs) then replace(replace($tmp, '&quot;', '&amp;quot;'), '&#xA;', '&amp;#xA;') else $tmp"
-		/>
-	</xsl:function>
-
-	<xsl:function name="cfn:html-replace-entities">
-		<xsl:param name="value"/>
-		<xsl:value-of select="cfn:html-replace-entities($value, false())"/>
-	</xsl:function>
-
-	<doc:documentation xmlns:doc="http://www.corbas.co.uk/ns/documentation"
-		xmlns="http://www.w3.org/1999">
-		<p>Return the namespace prefix for a node if known.</p>
-	</doc:documentation>
-	<xsl:function name="cfn:namespace-prefix" as="xs:string">
-
-		<xsl:param name="node" as="element()"/>
-		<xsl:variable name="uri" select="namespace-uri($node)"/>
-		<xsl:variable name="prefixes" select="in-scope-prefixes($node)"/>
-		<xsl:variable name="prefix"
-			select="for $ns in $prefixes return if (namespace-uri-for-prefix($ns, $node) = $uri) then ($ns) else ()"/>
-		<xsl:value-of select="$prefix"/>
-
-	</xsl:function>
-
-	<doc:documentation xmlns:doc="http://www.corbas.co.uk/ns/documentation"
-		xmlns="http://www.w3.org/1999/xhtml">
-		<p>Return a sequence of namespace prefixes which were not declared on the parent
-			element.Gets the in scope namespace URIs for the parameter element and the
-		parent element. Builds a list of those namespaces that are not in the parent
-		scope. Then filters the current prefix list based on that result to find the new prefixes only</p>
-	</doc:documentation>
-	<xsl:function name="cfn:newly-declared-namespaces" as="xs:string*">
-		<xsl:param name="node" as="element()"/>
-
-		<!-- in scope namespace uris for this node -->
-		<xsl:variable name="our-namespaces" select="for $ns in in-scope-prefixes($node) return namespace-uri-for-prefix($ns, $node)"/>
-
-		<!-- in scope namespace uris for the parent node -->
-		<xsl:variable name="parent-namespaces"
-			select="if ($node/parent::*) then for $ns in in-scope-prefixes($node/parent::*) return namespace-uri-for-prefix($ns, $node/parent::*) else ()"/>
-
-		<!-- the URIs that have just become in scope -->
-		<xsl:variable name="new-namespace-uris" select="$our-namespaces[not(. = $parent-namespaces)]"/>
-		
-		<!-- Filter the in scope prefixes based on whether their URIs are represented in the new list -->
-		<xsl:variable name="new-namespaces" select="for $prefix in in-scope-prefixes($node) return if (namespace-uri-for-prefix($prefix, $node) = $new-namespace-uris) then $prefix else ()"/>
-
-<!--    Debug output
-		<xsl:message>Our Namespaces (<xsl:value-of select="string-join($our-namespaces, ', ')"/>)</xsl:message>
-		<xsl:message>Parent Namespaces (<xsl:value-of select="string-join($parent-namespaces, ', ')"/>)</xsl:message>		
-		<xsl:message>New Namespaces (<xsl:value-of select="string-join($new-namespace-uris, ', ')"/>)</xsl:message>
--->
-		
-		<!-- Return the sequence or prefixes, having stripped out the xml namespace -->
-		<xsl:sequence select="$new-namespaces[not(. = 'xml')]"/>		
-		
-	</xsl:function>
-
-
-	<doc:documentation xmlns:doc="http://www.corbas.co.uk/ns/documentation"
-		xmlns="http://www.w3.org/1999">
-		<p>Return true() if a node is in the default namespace. Checks by ensuring that the element
-			is in a namespace and then checking if the namespace prefix is blank.</p>
-	</doc:documentation>
-	<xsl:function name="cfn:in-default-ns" as="xs:boolean">
-		<xsl:param name="node" as="element()"/>
-		<xsl:variable name="prefix" select="cfn:namespace-prefix($node)"/>
-		<xsl:value-of select="if (namespace-uri($node) and $prefix = '') then true() else false()"/>
-	</xsl:function>
 
 </xsl:stylesheet>
