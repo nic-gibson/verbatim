@@ -10,7 +10,7 @@ Most of the documentation is in Oxygen's XD format embedded in the stylesheets. 
 
 ## Base stylesheet ##
 
-The base stylesheet - `verbatim-base.xsl`  - escapes XML to text. The only meaningful formatting options relate to the inclusion of line breaks and indentation.
+The base stylesheet - `lib/verbatim-base.xsl`  - escapes XML to text. The only meaningful formatting options relate to the inclusion of line breaks and indentation.
 
 ```xml
 <foo name="bar"/>
@@ -66,5 +66,22 @@ or
 
 ## XHTML with highlighting ##
 
-The final stylesheet - `verbatim-highlight-xhtml.xsl` - layers on top of the previous stylesheet to provide highlighting in the output:
+The third stylesheet - `verbatim-highlight-xhtml.xsl` - layers on top of the previous stylesheet to provide highlighting in the output:
 
+```xml
+<xsl:stylesheet version="2.0"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim">
+	<xsl:import href="verbatim-highlight-xhtml.xsl"/>
+		<xsl:template match="example">
+		<xsl:apply-templates select="section" mode="verbatim">
+			<xsl:param name="indent-elements" select="true()"/>
+			<xsl:param name="">
+		</xsl:apply-templates>
+	</xsl:apply-templates>
+</xsl:stylesheet>
+```
+
+## XSL-FO ##
+
+The final stylesheet - `verbatim-fo.xsl` - layers on top of `verbatim-base.xsl` to generate XSL-FO renderings.  

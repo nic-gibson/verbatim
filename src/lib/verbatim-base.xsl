@@ -6,8 +6,6 @@
 	
 	<xsl:import href="functions.xsl"/>
 
-	<xsl:output method="text" omit-xml-declaration="yes" indent="no"/>
-
 	<xd:doc scope="stylesheet">
 		<xd:desc>
 

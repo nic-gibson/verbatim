@@ -4,7 +4,7 @@
 	xmlns:cfn="http://www.corbas.co.uk/ns/xsl/functions" xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim" 
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs cfn xd verbatim">
 	
-	<xsl:import href="verbatim-base.xsl"/>
+	<xsl:import href="lib/verbatim-base.xsl"/>
 	
 	<xd:doc scope="stylesheet">
 		<xd:desc>
