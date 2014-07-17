@@ -5,11 +5,14 @@
 	xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl"
 	xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:saxon="http://saxon.sf.net/"
-	exclude-result-prefixes="xs xd verbatim saxon"
+	xmlns:pkg="http://expath.org/ns/pkg"
+	exclude-result-prefixes="xs xd verbatim saxon pkg"
 	version="2.0">
-	
-	
+		
 	<xsl:import href="verbatim-xhtml.xsl"/>
+	
+	<pkg:import-uri>http://www.corbas.co.uk/xmlverbatim/highlight-xhtml</pkg:import-uri>
+	
 	
 	
 	<xd:doc scope="stylesheet">

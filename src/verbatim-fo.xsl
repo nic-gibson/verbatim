@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+	xmlns:pkg="http://expath.org/ns/pkg"
 	xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl"
 	xmlns:cfn="http://www.corbas.co.uk/ns/xsl/functions" xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim" 
-	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs cfn xd verbatim">
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs cfn xd verbatim pkg">
 	
 	<xsl:import href="lib/verbatim-base.xsl"/>
+	
+	<pkg:import-uri>http://www.corbas.co.uk/xmlverbatim/fo</pkg:import-uri>
 	
 	<xd:doc scope="stylesheet">
 		<xd:desc>
