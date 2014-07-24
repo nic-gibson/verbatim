@@ -84,4 +84,16 @@ The third stylesheet - `verbatim-highlight-xhtml.xsl` - layers on top of the pre
 
 ## XSL-FO ##
 
-The final stylesheet - `verbatim-fo.xsl` - layers on top of `verbatim-base.xsl` to generate XSL-FO renderings.  
+The final stylesheet - `verbatim-fo.xsl` - layers on top of `verbatim-base.xsl` to generate XSL-FO renderings.  Apart from the output (and some specific styling options), this is identical:
+
+```xml
+<xsl:stylesheet version="2.0"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim">
+	<xsl:import href="verbatim-fo.xsl"/>
+	<xsl:param name="verbatim:indent-elements" select="true()"/>
+	<xsl:template match="example">
+		<xsl:apply-templates select="section" mode="verbatim"/>
+	</xsl:apply-templates>
+</xsl:stylesheet>
+```

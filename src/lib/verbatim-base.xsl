@@ -171,8 +171,6 @@
 	<!--  used to find new lines -->
 	<xsl:variable name="nl" select="'&#xA;'" as="xs:string"/>
 
-	<!-- a single space -->
-	<xsl:variable name="space" select="'&#x20;'"/>
 
 	<!-- greater than -->
 	<xsl:variable name="greater-than" select="'&gt;'"/>
@@ -238,7 +236,7 @@
 				order to always skip declarations for those namespaces. This allows sample code to
 				be placed in a namespace and output without one. Defaults to the value of the
 					<xd:b>verbatim:suppressed-namespaces-default</xd:b> stylesheet
-				parameter..</xd:p>
+				parameter.</xd:p>
 		</xd:param>
 
 		<xd:param name="limit-text">
@@ -327,7 +325,7 @@
 			<xsl:with-param name="keep-words" select="$keep-words" tunnel="yes"/>
 			<xsl:with-param name="indent-increment" select="$indent-increment" tunnel="yes"/>
 
-			<xsl:with-param name="tab-out" select="verbatim:replicate($indent-string, $tab-width)"
+			<xsl:with-param name="tab-out" select="verbatim:replicate-string($indent-string, $tab-width)"
 				as="xs:string" tunnel="yes"/>
 			<xsl:with-param name="verbatim-root" select="." as="item()" tunnel="yes"/>
 
@@ -337,13 +335,17 @@
 
 	<xd:doc>
 		<xd:desc>Process the initial node. This is an opportunity to wrap something around the
-			entire output.</xd:desc>
+			entire output. The default implementation does nothing.</xd:desc>
 	</xd:doc>
-	<xsl:template match="node()" mode="verbatim:initial-node">
+	<xsl:template match="node()" mode="verbatim:initial-node" as="item()*">
 		<xsl:apply-templates select="." mode="verbatim:node"/>
 	</xsl:template>
 
-
+	<xd:doc>
+		<xd:desc>Base processing for all elements. Simply apply the start, content
+		and end template modes to the current element. There is unlikely to be a
+		reason to override this template.</xd:desc>
+	</xd:doc>
 	<xsl:template match="*" mode="verbatim:node" as="item()*">
 
 		<!-- output the start tag, namespaces and attributes -->
@@ -433,13 +435,15 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*[not(node())]" mode="verbatim:end">
-		<xsl:text>/&gt;</xsl:text>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="concat('/', $greater-than)"/>
+		</xsl:call-template>
 		<xsl:apply-templates select="." mode="verbatim:potential-end-break"/>
 	</xsl:template>
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Output the closing tag for elements which don't only have text children.</xd:p>
+			<xd:p>Output the closing tag for elements which have content.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*[node()]" mode="verbatim:end">
@@ -467,7 +471,7 @@
 
 	<xd:doc>
 		<xd:desc>Output an element or attribute name by calling the prefix template and the local
-			name template</xd:desc>
+			name template.</xd:desc>
 	</xd:doc>
 	<xsl:template match="@*|*" mode="verbatim:name">
 		<xsl:apply-templates select="." mode="verbatim:ns-prefix"/>
@@ -490,7 +494,7 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="@*[not(local-name() = name())]" mode="verbatim:ns-prefix">
-		<xsl:value-of select="verbatim:namespace-prefix(., parent::*)"/>
+		<xsl:value-of select="verbatim:namespace-prefix(.)"/>
 		<xsl:call-template name="verbatim:decorate">
 			<xsl:with-param name="text" select="':'"/>
 		</xsl:call-template>
@@ -520,6 +524,8 @@
 		<xd:desc>
 			<xd:p>Output the namespace declarations required for an element. This will be any
 				namespaces which just came into scope.</xd:p>
+			<xd:p>Tunnels the <xd:b>suppressed-namespaces</xd:b> and 
+				<xd:b>suppress-ns-declarations</xd:b> parameters.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*" mode="verbatim:ns-declarations">
@@ -892,7 +898,7 @@
 
 	<xd:doc>
 		<xd:desc>Processing instructions and comments have preceding indents if and only if they
-			have no meaningful text siblings</xd:desc>
+			have no meaningful text siblings.</xd:desc>
 	</xd:doc>
 	<xsl:template
 		match="comment()[not(verbatim:meaningful-text-siblings(.))]|
@@ -905,6 +911,9 @@
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Write out an indent as appropriate for the output type.</xd:p>
+			<xd:p>Uses the tunneled <xd:b>indent</xd:b>, <xd:b>indent-string</xd:b>,
+			<xd:b>indent-increment</xd:b> and <xd:b>indent-elements</xd:b> parameters.</xd:p>
+			<xd:p>No indent occurrs unless <xd:b>indent-elements</xd:b> is true</xd:p>
 		</xd:desc>
 	</xd:doc>
 
@@ -912,7 +921,7 @@
 		<xsl:param name="indent" as="xs:integer" tunnel="yes"/>
 		<xsl:param name="indent-string" as="xs:string" tunnel="yes"/>
 		<xsl:param name="indent-increment" as="xs:integer" tunnel="yes"/>
-		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes" select="false()"/>
+		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes"/>
 		<xsl:if test="$indent-elements">
 			<xsl:value-of select="verbatim:indent($indent, $indent-string, $indent-increment)"/>
 		</xsl:if>
@@ -922,7 +931,8 @@
 	<xd:doc>
 		<xd:desc>
 			<xd:p>This is a placeholder template that allows the basic syntax (angle brackets,
-				quotes, etc) to be overridden.</xd:p>
+				quotes, etc) to be overridden. All literal text is passed through this template
+			which, by default, does nothing.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template name="verbatim:decorate">

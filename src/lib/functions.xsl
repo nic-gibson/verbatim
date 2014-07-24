@@ -50,28 +50,35 @@
 	<xd:doc>
 		<xd:desc>
 			<xd:p>This function replaces all occurrences of ampersand, less than and greater than,
-				with entities. If the <xd:i>with-attrs</xd:i> parameter is set then the value is
-				assumed to an attribute value and quotes are replaced as well. </xd:p>
+				with escaped entities. If the <xd:i>with-attrs</xd:i> parameter is set then the value is
+				assumed to be an attribute value and quotes are replaced as well. </xd:p>
 		</xd:desc>
+		<xd:param name="value">The text to be escaped</xd:param>
+		<xd:param name="is-attribute">Set to true if <xd:b>value</xd:b> is an attribute value</xd:param>
+		<xd:return>A string with all entities escaped to appear as if they were the literal entity</xd:return>
 	</xd:doc>
-	<xsl:function name="verbatim:html-replace-entities">
-		<xsl:param name="value"/>
-		<xsl:param name="with-attrs"/>
+	<xsl:function name="verbatim:html-replace-entities" as="xs:string">
+		<xsl:param name="value" as="item()"/>	<!-- treat as text but could be a node -->
+		<xsl:param name="is-attribute" as="xs:boolean"/> 
 		<xsl:variable name="tmp"
 			select="
 			replace(replace(replace($value, '&amp;', '&amp;amp;'),'&lt;', '&amp;lt;'),'&gt;', '&amp;gt;')"/>
 		<xsl:value-of
-			select="if ($with-attrs) then replace(replace($tmp, '&quot;', '&amp;quot;'), '&#xA;', '&amp;#xA;') else $tmp"
+			select="if ($is-attribute) then replace(replace($tmp, '&quot;', '&amp;quot;'), '&#xA;', '&amp;#xA;') else $tmp"
 		/>
 	</xsl:function>
 	
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Defaulted version of above which never replaces in attributes.</xd:p>
+			<xd:p>This function replaces all occurrences of ampersand, less than and greater than,
+				with escaped entities. It is identical to the two parameter version but never 
+			treats the parameter as an attribute value.</xd:p>
 		</xd:desc>
+		<xd:param name="value">The text to be escaped</xd:param>
+		<xd:return>A string with all entities escaped to appear as if they were the literal entity</xd:return>
 	</xd:doc>
 	<xsl:function name="verbatim:html-replace-entities" as="xs:string">
-		<xsl:param name="value"/>
+		<xsl:param name="value" as="item()"/>
 		<xsl:sequence select="verbatim:html-replace-entities($value, false())"/>
 	</xsl:function>
 	
@@ -79,35 +86,17 @@
 		<xd:desc>
 			<xd:p>Return the namespace prefix for a node if known and it has one.</xd:p>
 		</xd:desc>
+		<xd:param name="node">The node for which the namespace prefix is to be found.</xd:param>
+		<xd:return>The namespace prefix for the node or the empty string if there isn't one.</xd:return>
 	</xd:doc>
 	<xsl:function name="verbatim:namespace-prefix" as="xs:string">
 		
 		<xsl:param name="node" as="item()"/>
-		<xsl:param name="ns-source" as="element()"/>
-		<xsl:variable name="uri" select="namespace-uri($node)" as="xs:anyURI"/>
-		<xsl:variable name="prefixes" select="in-scope-prefixes($ns-source)" as="xs:string*"/>
-		<xsl:variable name="prefixes"
-			select="if (exists($uri) ) 
-			then for $ns in $prefixes 
-			return 
-			(if (namespace-uri-for-prefix($ns, $ns-source) = $uri) then $ns else ())
-			else ()"/>
-		
-		<xsl:sequence select="if (exists($prefixes)) then $prefixes[1] else ''"/>
+		<xsl:value-of select="substring-before($node/name(), ':')"/>
 		
 	</xsl:function>
 	
-	<xd:doc>
-		<xd:desc>
-			<xd:p>As above but with the second parameter defaulted.</xd:p>
-		</xd:desc>
-	</xd:doc>
-	<xsl:function name="verbatim:namespace-prefix" as="xs:string">
-		
-		<xsl:param name="node" as="item()"/>
-		<xsl:sequence select="verbatim:namespace-prefix($node, $node)"/>
-		
-	</xsl:function>
+	
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Return a sequence of namespace prefixes which were not declared on the parent
@@ -138,6 +127,9 @@
 				parameter but not on its parent (if any). If the root element is provided then all
 				the namespaces in scope at the root are returned.</xd:p>
 		</xd:desc>
+		<xd:param name="node">The element for which we want any newly in scope namespaces.</xd:param>
+		<xd:return>A sequence of namespace URIs which came into scope on this element. In many
+		cases this will be an empty sequence</xd:return>
 	</xd:doc>
 	<xsl:function name="verbatim:new-in-scope-namespaces" as="xs:anyURI*">
 		
@@ -147,9 +139,11 @@
 		<!-- in scope namespace uris for this node -->
 		<xsl:variable name="our-namespaces" select="verbatim:namespace-uris-for-node($node)"/>
 		
-		<!-- in scope namespace uris for the parent node -->
+		<!-- in scope namespace uris for the parent node - don't evaluate if $our-namespaces is empty -->
 		<xsl:variable name="parent-namespaces"
-			select="if ($parent-element) then verbatim:namespace-uris-for-node($parent-element) else ()"/>
+			select="if ($parent-element and count($our-namespaces)) 
+				then verbatim:namespace-uris-for-node($parent-element) 
+				else ()"/>
 		
 		<!-- the URIs that have just become in scope -->
 		<xsl:sequence select="$our-namespaces[not(. = $parent-namespaces)]"/>
@@ -173,6 +167,9 @@
 		<xd:desc>
 			<xd:p>Return the sequence of namespace URIs in scope for a given element</xd:p>
 		</xd:desc>
+		<xd:param name="node">The element for which we want the namespace URIs.</xd:param>
+		<xd:return>A sequence of namespace URIs which are in scope on this element. In many
+			cases this will be an empty sequence</xd:return>
 	</xd:doc>
 	<xsl:function name="verbatim:namespace-uris-for-node" as="xs:anyURI*">
 		<xsl:param name="node" as="element()"/>
@@ -185,35 +182,69 @@
 		<xd:desc>
 			<xd:p>Return a string replicated a given number of times.</xd:p>
 		</xd:desc>
+		<xd:param name="input">The string to be replicated</xd:param>
+		<xd:param name="count">The number of replications required. If zero or less, an
+			empty string will be returned.</xd:param>
+		<xd:return>A string consisting of the value of <xd:b>input</xd:b> replicated
+		<xd:b>count</xd:b> times.</xd:return>
 	</xd:doc>
-	<xsl:function name="verbatim:replicate" as="xs:string">
+	<xsl:function name="verbatim:replicate-string" as="xs:string">
 		<xsl:param name="input" as="xs:string"/>
 		<xsl:param name="count" as="xs:integer"/>
-		<xsl:value-of
-			select="if ($count = 0) then '' else string-join((for $n in 1 to $count return $input), '')"
-		/>
+		<xsl:value-of select="string-join(verbatim:replicate($input, $count), '')"/>
+	</xsl:function>
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Return a item replicated a given number of times as a sequence.</xd:p>
+		</xd:desc>
+		<xd:param name="input">The item to be replicated</xd:param>
+		<xd:param name="count">The number of replications required. If zero or less, an
+		empty sequence will be returned.</xd:param>
+		<xd:return>A sequence of items consisting of the value <xd:b>input</xd:b> replicated
+		<xd:b>count</xd:b> times.</xd:return>
+	</xd:doc>
+	<xsl:function name="verbatim:replicate" as="item()*">
+		<xsl:param name="input" as="item()"/>
+		<xsl:param name="count" as="xs:integer"/>
+		<xsl:sequence select="if ($count gt 0) then 
+			for $n in 1 to $count return $input
+			else ()"/>
 	</xsl:function>
 	
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Create the indent string to be used at any particular point in the processing.
-				Never creates an indent string longer than that defined by max-increment.</xd:p>
+				The calling templates limit the maximum indent level.</xd:p>
 		</xd:desc>
+		<xd:param name="indent">The indent level. This is multiplied by the indent increment
+		to get the number of characters required.</xd:param>
+		<xd:param name="indent-string">The character to be used for indents. This is set as 
+			a stylesheet parameter (see <xd:b>verbatim:indent-string-default</xd:b>) and
+		passed by the calling templates.</xd:param>
+		<xd:param name="indent-increment">The number of copies of <xd:b>indent-string</xd:b>
+		to be replicated at each indent level. </xd:param>
 	</xd:doc>
 	
 	<xsl:function name="verbatim:indent" as="xs:string">
 		<xsl:param name="indent" as="xs:integer"/>
 		<xsl:param name="indent-string" as="xs:string"/>
 		<xsl:param name="indent-increment" as="xs:integer"/>
-		<xsl:value-of select="verbatim:replicate($indent-string, $indent * $indent-increment)"/>
+		<xsl:value-of select="verbatim:replicate-string($indent-string, $indent * $indent-increment)"/>
 	</xsl:function>
 	
 	
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Return true if an element has any non whitespace only text children and false
-				otherwise.</xd:p>
+				otherwise. The concept of meaningful text children is used to determine whether
+			or not indents and breaks should be inserted in the output. Each child text node
+			is examined. If there are none or all of them are whitespace one, the function returns false. 
+			If any child text node is not just whitespace (defined by checking if the normalised
+			value is empty) then the function returns true. </xd:p>
 		</xd:desc>
+		<xd:param name="node">The node to be tested.</xd:param>
+		<xd:result><xd:b>true()</xd:b> if the node has meaningful text children and <xd:b>false()</xd:b> otherwise.</xd:result>
 	</xd:doc>
 	<xsl:function name="verbatim:meaningful-text-children" as="xs:boolean">
 		<xsl:param name="node" as="element()"/>
@@ -225,9 +256,15 @@
 	
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Return true if an element has any text siblings that do not contain whitespace and
-				false otherwise.</xd:p>
+			<xd:p>Return true if an element has any non whitespace only text siblings and false
+				otherwise. The concept of meaningful text siblings is used to determine whether
+				or not indents and breaks should be inserted in the output. Each sibling text node
+				is examined. If there are none or all of them are whitespace one, the function returns false. 
+				If any sibling text node is not just whitespace (defined by checking if the normalised
+				value is empty) then the function returns true. </xd:p>
 		</xd:desc>
+		<xd:param name="node">The node to be tested.</xd:param>
+		<xd:result><xd:b>true()</xd:b> if the node has meaningful text siblings and <xd:b>false()</xd:b> otherwise.</xd:result>		
 	</xd:doc>
 	<xsl:function name="verbatim:meaningful-text-siblings" as="xs:boolean">
 		<xsl:param name="node" as="node()"/>
@@ -237,16 +274,21 @@
 	</xsl:function>
 	
 	<xd:doc>
-		<xd:desc>Return if and only if the are meaningful sibling nodes following the current node. That 
-		means any PI, comment, or element or any non WS text node.</xd:desc>
-	</xd:doc>
-	<xsl:function name="verbatim:meaningful-following-siblings" as="xs:boolean">
+		<xd:desc>
+			<xd:p>Return true if an element has any non whitespace only following text siblings and false
+				otherwise. The concept of meaningful text siblings is used to determine whether
+				or not indents and breaks should be inserted in the output. Each following sibling text node
+				is examined. If there are none or all of them are whitespace one, the function returns false. 
+				If any sibling text node is not just whitespace (defined by checking if the normalised
+				value is empty) then the function returns true. </xd:p>
+		</xd:desc>
+		<xd:param name="node">The node to be tested.</xd:param>
+		<xd:result><xd:b>true()</xd:b> if the node has meaningful following text siblings and <xd:b>false()</xd:b> otherwise.</xd:result>		
+	</xd:doc>	<xsl:function name="verbatim:meaningful-following-siblings" as="xs:boolean">
 		<xsl:param name="node" as="node()"/>
 		<xsl:value-of
 			select="some $sib in ($node/following-sibling::node()) satisfies not($sib[self::text()] and normalize-space($sib) = '')"/>
 	</xsl:function>
 	
-	<xd:doc>
-		<xd:desc/>
-	</xd:doc>
+
 </xsl:stylesheet>

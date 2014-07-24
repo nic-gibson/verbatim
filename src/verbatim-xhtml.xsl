@@ -126,10 +126,6 @@
 	</xd:doc>
 	<xsl:template match="*" mode="verbatim:node">
 		
-		<xsl:message>Kids: <xsl:value-of select="verbatim:meaningful-text-children(.)"/></xsl:message>
-		<xsl:message>Sibs: <xsl:value-of select="verbatim:meaningful-text-siblings(.)"/></xsl:message>
-		<xsl:message>Following Sibs: <xsl:value-of select="verbatim:meaningful-following-siblings(.)"/></xsl:message>
-		
 		<span class="{$verbatim:element-class}">
 			<xsl:next-match/>
 		</span>
@@ -137,7 +133,9 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Output the namespace prefix for an element that actually has one.</xd:p>
+			<xd:p>Output the namespace prefix for an element that actually has one, wrapped
+			in a span. Uses the value of <xd:b>verbatim:element-ns-prefix-class</xd:b> for the <xd:i>class</xd:i>
+			attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*[not(local-name() = name())]" mode="verbatim:ns-prefix">
@@ -149,7 +147,8 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Output the element name itself</xd:p>
+			<xd:p>Output the element name itself, wrapped in a span.  Uses the value of <xd:b>verbatim:element-name-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*" mode="verbatim:name">
@@ -162,7 +161,9 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Renders an individual namespace declaration.</xd:p>
+			<xd:p>Renders an individual namespace declaration, wrapped in a span.  
+				Uses the value of <xd:b>verbatim:element-ns-name-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*" mode="verbatim:render-ns-declaration">
@@ -173,7 +174,9 @@
 
 	<xd:doc>
 		<xd:desc>Generate a namespace declaration for those elements where the parent is in a
-			namespace but the current node isn't</xd:desc>
+			namespace but the current node isn't, wrapped in a span.
+			Uses the value of <xd:b>verbatim:element-ns-name-class</xd:b> for the <xd:i>class</xd:i>
+			attribute.</xd:desc>
 	</xd:doc>
 	<xsl:template match="*[not(namespace-uri())][namespace-uri(parent::*)]"
 		mode="verbatim:ns-declarations">
@@ -182,7 +185,9 @@
 
 
 	<xd:doc>
-		<xd:desc>Render an attribute name</xd:desc>
+		<xd:desc>Render an attribute name, wrapped in a span.
+			Uses the value of <xd:b>verbatim:attribute-name-class</xd:b> for the <xd:i>class</xd:i>
+			attribute.</xd:desc>
 	</xd:doc>
 	<xsl:template match="@*" mode="verbatim:name">
 		<span class="{$verbatim:attribute-name-class}">
@@ -192,7 +197,9 @@
 
 
 	<xd:doc>
-		<xd:desc>Render an attribute value</xd:desc>
+		<xd:desc>Render an attribute value, wrapped in a span.
+			Uses the value of <xd:b>verbatim:attribute-content-class</xd:b> for the <xd:i>class</xd:i>
+			attribute.</xd:desc>
 	</xd:doc>
 	<xsl:template match="@*" mode="verbatim:content">
 		<span class="{$verbatim:attribute-content-class}">
@@ -202,8 +209,10 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Process text. Potentially replaces entities and restricts the amount of output
-				text. Newlines are replaced with breaks.</xd:p>
+			<xd:p>Process text. Calls the base version and wraps that 
+				in a span if the result is not empty.  Uses the value of 
+				<xd:b>verbatim:text-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="text()" mode="verbatim:node">
@@ -222,7 +231,9 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Output the body of a comment wrapped in a span</xd:p>
+			<xd:p>Output the body of a comment wrapped in a span.
+				Uses the value of <xd:b>verbatim:comment-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 
@@ -232,7 +243,9 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Output processing instruction body, wrapped in a span.</xd:p>
+			<xd:p>Output processing instruction body, wrapped in a span.
+				Uses the value of <xd:b>verbatim:pi-content-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="processing-instruction()" mode="verbatim:content">
@@ -243,7 +256,9 @@
 
 	<xd:doc>
 		<xd:desc>
-			<xd:p>Output processing instruction name, wrapped in a span.</xd:p>
+			<xd:p>Output processing instruction name, wrapped in a span.
+				Uses the value of <xd:b>verbatim:pi-name-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="processing-instruction()" mode="verbatim:name">
@@ -265,7 +280,9 @@
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Write out an indent wrapped in a span. Holds the result of next-match
-			in a variable so that we can suppress empty results.</xd:p>
+			in a variable so that we can suppress empty results.
+			Uses the value of <xd:b>verbatim:indent-class</xd:b> for the <xd:i>class</xd:i>
+				attribute.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="node()" mode="verbatim:indent">
@@ -273,9 +290,7 @@
 			<xsl:next-match/>
 		</xsl:variable>
 		<xsl:if test="not($content = '')">
-			<span class="{$verbatim:indent-class}">
-				<xsl:next-match/>
-			</span>
+			<span class="{$verbatim:indent-class}"><xsl:next-match/></span>
 		</xsl:if>
 		
 	</xsl:template>
