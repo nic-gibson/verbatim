@@ -146,6 +146,12 @@
 					<xd:b>limit-text</xd:b> and <xd:b>max-words</xd:b> parameters indicate that it
 				should be truncated. Defaults to <xd:i>5</xd:i> words.</xd:p>
 		</xd:param>
+		
+		<xd:param name="verbatim:normalize-text-default">
+			<xd:p>Sets the default value for the <xd:b>normalize-text</xd:b> parameter. Set this to 
+				true to normalize text nodes before output. Defaults to 
+			<xd:id>false()</xd:id>. </xd:p>
+		</xd:param>
 
 	</xd:doc>
 
@@ -162,7 +168,7 @@
 	<xsl:param name="verbatim:indent-string-default" select="'&#xA0;'" as="xs:string"/>
 	<xsl:param name="verbatim:tab-width-default" select="4"/>
 	<xsl:param name="verbatim:keep-words-default" select="5"/>
-
+	<xsl:param name="verbatim:normalize-text-default" select="false()" as="xs:boolean"/>	
 
 
 	<!-- horizontal tab character -->
@@ -280,6 +286,15 @@
 				truncation occurs. Defaults to the value of the
 					<xd:b>verbatim:keep-words-default</xd:b> stylesheet parameter.</xd:p>
 		</xd:param>
+		
+		<xd:param name="normalize-text">
+			<xd:p>Defines the whether or not text nodes should be normalized before processing.
+				If the parent element has the <xd:b>xml:space</xd:b> attribute
+				set to <xd:i>preserve</xd:i>, the node will not be normalized whatever the value
+				of this parameter. Defaults to the value of the <xd:b>verbatim:normalize-text-default</xd:b>
+				stylesheet parameter.
+			</xd:p>
+		</xd:param>
 
 
 	</xd:doc>
@@ -303,6 +318,7 @@
 		<xsl:param name="tab-width" select="$verbatim:tab-width-default" as="xs:integer"/>
 		<xsl:param name="max-words" select="$verbatim:max-words-default" as="xs:integer"/>
 		<xsl:param name="keep-words" select="$verbatim:keep-words-default" as="xs:integer"/>
+		<xsl:param name="normalize-text" select="$verbatim:normalize-text-default" as="xs:boolean"/>
 
 
 		<xsl:apply-templates select="." mode="verbatim:initial-node">
@@ -324,6 +340,7 @@
 			<xsl:with-param name="max-words" select="$max-words" tunnel="yes"/>
 			<xsl:with-param name="keep-words" select="$keep-words" tunnel="yes"/>
 			<xsl:with-param name="indent-increment" select="$indent-increment" tunnel="yes"/>
+			<xsl:with-param name="normalize-text" select="$normalize-text" tunnel="yes"/>
 
 			<xsl:with-param name="tab-out" select="verbatim:replicate-string($indent-string, $tab-width)"
 				as="xs:string" tunnel="yes"/>
@@ -707,17 +724,20 @@
 		<xsl:param name="max-words" as="xs:integer" tunnel="yes"/>
 		<xsl:param name="keep-words" as="xs:integer" tunnel="yes"/>
 		<xsl:param name="ellipsis-string" as="xs:string" tunnel="yes"/>
+		<xsl:param name="normalize-text" as="xs:boolean" tunnel="yes"/>
+		<xsl:variable name="input-string" 
+			select="if ($normalize-text and not(parent::*/xml:space = 'preserve')) then normalize-space(.) else ."/>
 
 		<xsl:call-template name="preformatted-output">
 			<xsl:with-param name="text"
 				select="if ($replace-entities = true()) 
 						then 
 							if ($limit-text = true()) 
-								then verbatim:html-replace-entities(verbatim:limit-text(., $max-words, $keep-words, $ellipsis-string))
+								then verbatim:html-replace-entities(verbatim:limit-text($input-string, $max-words, $keep-words, $ellipsis-string))
 								else verbatim:html-replace-entities(.)
 						else
 							if ($limit-text = true()) 
-								then verbatim:limit-text(., $max-words, $keep-words, $ellipsis-string)
+								then verbatim:limit-text($input-string, $max-words, $keep-words, $ellipsis-string)
 								else .
 						"
 			/>

@@ -139,7 +139,7 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="*[not(local-name() = name())]" mode="verbatim:ns-prefix">
-		<span class="${verbatim:element-ns-prefix-class}">
+		<span class="{$verbatim:element-ns-prefix-class}">
 			<xsl:next-match/>
 		</span>
 	</xsl:template>
@@ -286,7 +286,7 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="node()" mode="verbatim:indent">
-		<xsl:variable name="content" as="xs:string">
+		<xsl:variable name="content" as="xs:string?">
 			<xsl:next-match/>
 		</xsl:variable>
 		<xsl:if test="not($content = '')">

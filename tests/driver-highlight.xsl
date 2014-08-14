@@ -21,7 +21,7 @@
 				<div class="verbatim">
 					<p>
 						<xsl:apply-templates select="." mode="verbatim">
-							<xsl:with-param name="highlight-xpath" select="'//grandchild'"/>
+							<xsl:with-param name="matching-nodes" select="//grandchild"/>
 							<xsl:with-param name="indent-elements" select="true()"/>
 						</xsl:apply-templates>
 					</p>

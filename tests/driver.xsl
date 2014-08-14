@@ -11,7 +11,7 @@
 		<html>
 			<head>
 				<title>Verbatim XHTML Test</title>
-				<link rel="stylesheet" type="text/css" href="documentation.css"/>
+				<link rel="stylesheet" type="text/css" href="/Users/nicg/Projects/xmlverbatim/tests/documentation.css"/>
 			</head>
 
 
@@ -22,6 +22,7 @@
 					<p>
 						<xsl:apply-templates select="." mode="verbatim">
 							<xsl:with-param name="indent-elements" select="true()"/>
+							<xsl:with-param name="normalize-text" select="true()"/>
 						</xsl:apply-templates>
 					</p>
 				</div>
