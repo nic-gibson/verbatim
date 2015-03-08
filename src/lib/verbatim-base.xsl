@@ -148,9 +148,8 @@
 		</xd:param>
 		
 		<xd:param name="verbatim:normalize-text-default">
-			<xd:p>Sets the default value for the <xd:b>normalize-text</xd:b> parameter. Set this to 
-				true to normalize text nodes before output. Defaults to 
-			<xd:id>false()</xd:id>. </xd:p>
+			<xd:p>If set to <xd:b>true()</xd:b> then normalize all text before outputting it.
+			Defaults to <xd:i>false()</xd:i>.</xd:p>
 		</xd:param>
 
 	</xd:doc>
@@ -168,8 +167,7 @@
 	<xsl:param name="verbatim:indent-string-default" select="'&#xA0;'" as="xs:string"/>
 	<xsl:param name="verbatim:tab-width-default" select="4"/>
 	<xsl:param name="verbatim:keep-words-default" select="5"/>
-	<xsl:param name="verbatim:normalize-text-default" select="false()" as="xs:boolean"/>	
-
+	<xsl:param name="verbatim:normalize-text-default" select="false()"/>
 
 	<!-- horizontal tab character -->
 	<xsl:variable name="tab" select="'&#x9;'" as="xs:string"/>
@@ -186,6 +184,7 @@
 
 	<!-- double quote -->
 	<xsl:variable name="double-quote" select="'&quot;'"/>
+	
 
 	<xd:doc>
 		<xd:desc>
@@ -269,7 +268,7 @@
 			<xd:p>Sets value of the <xd:b>tab-width</xd:b> parameter, used for tab expansions.
 				Defines the number of spaces that will be used to replace a tab character. Defaults
 				to the value of the <xd:b>tab-width-default</xd:b> stylesheet parameter. Generates
-				the <xd:b>verbatim:tab-out</xd:b> tunnel paramater available to all further
+				the <xd:b>verbatim:tab-out</xd:b> tunnel parameter available to all further
 				templates.</xd:p>
 		</xd:param>
 
@@ -288,12 +287,8 @@
 		</xd:param>
 		
 		<xd:param name="normalize-text">
-			<xd:p>Defines the whether or not text nodes should be normalized before processing.
-				If the parent element has the <xd:b>xml:space</xd:b> attribute
-				set to <xd:i>preserve</xd:i>, the node will not be normalized whatever the value
-				of this parameter. Defaults to the value of the <xd:b>verbatim:normalize-text-default</xd:b>
-				stylesheet parameter.
-			</xd:p>
+			<xd:p>If set to <xd:i>true()</xd:i> then all text is normalized before output. Defaults to
+			the value of the <xd:b>verbatim:normalize-text-default</xd:b> stylesheet parameter.</xd:p>
 		</xd:param>
 
 
@@ -426,7 +421,9 @@
 	<xsl:template match="*" mode="verbatim:start" as="item()*">
 
 		<!-- generate the indent if required -->
-		<xsl:apply-templates select="." mode="verbatim:potential-indent"/>
+		<xsl:apply-templates select="." mode="verbatim:potential-indent">
+			<xsl:with-param name="start" select="true()" tunnel="yes"/>
+		</xsl:apply-templates>
 
 		<!-- start tag -->
 		<xsl:call-template name="verbatim:decorate">
@@ -466,7 +463,9 @@
 	<xsl:template match="*[node()]" mode="verbatim:end">
 
 		<!-- indent if required -->
-		<xsl:apply-templates select="." mode="verbatim:potential-indent"/>
+		<xsl:apply-templates select="." mode="verbatim:potential-indent">
+			<xsl:with-param name="end" select="true()" tunnel="yes"/>
+		</xsl:apply-templates>
 
 		<!-- output closing tag with prefix if required -->
 		<xsl:call-template name="verbatim:decorate">
@@ -725,25 +724,32 @@
 		<xsl:param name="keep-words" as="xs:integer" tunnel="yes"/>
 		<xsl:param name="ellipsis-string" as="xs:string" tunnel="yes"/>
 		<xsl:param name="normalize-text" as="xs:boolean" tunnel="yes"/>
-		<xsl:variable name="input-string" 
-			select="if ($normalize-text and not(parent::*/xml:space = 'preserve')) then normalize-space(.) else ."/>
+		
+		<xsl:variable name="text-to-process" select="if ($normalize-text) then verbatim:normalize-space(.) else ."/>
 
 		<xsl:call-template name="preformatted-output">
 			<xsl:with-param name="text"
 				select="if ($replace-entities = true()) 
 						then 
 							if ($limit-text = true()) 
-								then verbatim:html-replace-entities(verbatim:limit-text($input-string, $max-words, $keep-words, $ellipsis-string))
-								else verbatim:html-replace-entities(.)
+								then verbatim:html-replace-entities(verbatim:limit-text($text-to-process, $max-words, $keep-words, $ellipsis-string))
+								else verbatim:html-replace-entities($text-to-process)
 						else
 							if ($limit-text = true()) 
-								then verbatim:limit-text($input-string, $max-words, $keep-words, $ellipsis-string)
-								else .
+								then verbatim:limit-text($text-to-process, $max-words, $keep-words, $ellipsis-string)
+								else $text-to-process
 						"
 			/>
 		</xsl:call-template>
 
 	</xsl:template>
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Suppress empty text nodes where we have no meaningful text siblings.</xd:p>
+		</xd:desc>
+	</xd:doc>
+	<xsl:template match="text()[not(verbatim:meaningful-text-siblings(.))][normalize-space(.) = '']" mode="verbatim:node"/>
 	
 	<xd:doc>
 		<xd:desc>
@@ -759,9 +765,14 @@
 		<xsl:apply-templates select="." mode="verbatim:potential-indent"/>
 
 		<!-- output the comment -->
-		<xsl:text>&lt;!--</xsl:text>
+		
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="'&lt;!--'"/>
+		</xsl:call-template>
 		<xsl:apply-templates select="." mode="verbatim:content"/>
-		<xsl:text>--&gt;</xsl:text>
+		<xsl:call-template name="verbatim:decorate">
+			<xsl:with-param name="text" select="'--&gt;'"/>
+		</xsl:call-template>
 
 		<xsl:apply-templates select="." mode="verbatim:potential-break"/>
 
@@ -821,11 +832,11 @@
 				characters). </xd:p>
 		</xd:desc>
 	</xd:doc>
-	<!-- preformatted output: space as &nbsp;, tab as 8 &nbsp;
+	<!-- preformatted output: space as &nbsp;, tab as indent strings;
                              nl as <br> -->
 	<xsl:template name="preformatted-output">
 		<xsl:param name="text" as="xs:string"/>
-		<xsl:param name="tab-out" as="xs:string" tunnel="yes"/>
+		<xsl:param name="tab-out" as="xs:string" tunnel="yes" select="verbatim:replicate-string($verbatim:indent-string-default, $verbatim:tab-width-default)"/>
 		<xsl:call-template name="output-nl">
 			<xsl:with-param name="text" select="replace($text, $tab, $tab-out)"/>
 		</xsl:call-template>
@@ -869,6 +880,12 @@
 		<xsl:apply-templates select="." mode="verbatim:break"/>
 	</xsl:template>
 		
+	<xd:doc>
+		<xd:desc>Breaks occur after comments</xd:desc>
+	</xd:doc>		
+	<xsl:template match="comment()" mode="verbatim:potential-break">
+		<xsl:apply-templates select="." mode="verbatim:break"/>
+	</xsl:template>
 		
 		
 	<xd:doc>
@@ -912,12 +929,33 @@
 
 
 	<xd:doc>
+		<xd:desc>Write out indents for elements. Two parameters can be passed indicating
+		if we are starting or ending an element.</xd:desc>
+	</xd:doc>
+	<xsl:template match="*" mode="verbatim:potential-indent">
+		
+		<xsl:param name="end" select="false()" tunnel="yes" as="xs:boolean"/>
+		<xsl:param name="start" select="false()" tunnel="yes" as="xs:boolean"/>
+
+		<!-- if we are starting and have no text siblings, allow indent -->
+		<xsl:if test="$start and not(verbatim:meaningful-text-siblings(.))">
+			<xsl:apply-templates select="." mode="verbatim:indent"/>
+		</xsl:if>
+		
+		<!-- if we are ending and have no text children, allow indent -->
+		<xsl:if test="$end and not(verbatim:meaningful-text-children(.))">
+			<xsl:apply-templates select="." mode="verbatim:indent"/>
+		</xsl:if>
+		
+	</xsl:template>
+
+	<xd:doc>
 		<xd:desc>Do not generate indents or breaks for text() nodes</xd:desc>
 	</xd:doc>
 	<xsl:template match="text()" mode="verbatim:potential-break verbatim:potential-indent"/>
 
 	<xd:doc>
-		<xd:desc>Processing instructions and comments have preceding indents if and only if they
+		<xd:desc>Processing instructions, and comments have preceding indents if and only if they
 			have no meaningful text siblings.</xd:desc>
 	</xd:doc>
 	<xsl:template
@@ -927,7 +965,9 @@
 		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes" select="false()"/>
 		<xsl:apply-templates select="." mode="verbatim:indent"/>
 	</xsl:template>
-
+	
+	
+	
 	<xd:doc>
 		<xd:desc>
 			<xd:p>Write out an indent as appropriate for the output type.</xd:p>
@@ -937,22 +977,26 @@
 		</xd:desc>
 	</xd:doc>
 
-	<xsl:template match="node()" mode="verbatim:indent">
+	<xsl:template match="node()" mode="verbatim:indent" as="xs:string">
 		<xsl:param name="indent" as="xs:integer" tunnel="yes"/>
 		<xsl:param name="indent-string" as="xs:string" tunnel="yes"/>
 		<xsl:param name="indent-increment" as="xs:integer" tunnel="yes"/>
 		<xsl:param name="indent-elements" as="xs:boolean" tunnel="yes"/>
-		<xsl:if test="$indent-elements">
-			<xsl:value-of select="verbatim:indent($indent, $indent-string, $indent-increment)"/>
-		</xsl:if>
+		<xsl:choose>
+			<xsl:when test="$indent-elements">
+				<xsl:sequence select="verbatim:indent($indent, $indent-string, $indent-increment)"/>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:sequence select="''"/>
+			</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 
 
 	<xd:doc>
 		<xd:desc>
 			<xd:p>This is a placeholder template that allows the basic syntax (angle brackets,
-				quotes, etc) to be overridden. All literal text is passed through this template
-			which, by default, does nothing.</xd:p>
+				quotes, etc) to be overridden. Does nothing by default.</xd:p>
 		</xd:desc>
 	</xd:doc>
 	<xsl:template name="verbatim:decorate">

@@ -31,7 +31,7 @@
 		<xsl:variable name="keep" as="xs:integer"
 			select="if ($keep-words le 0) then 1 else $keep-words"/>
 		
-		<xsl:variable name="words" select="tokenize($text, '\s+')" as="xs:string*"/>
+		<xsl:variable name="words" select="if (normalize-space($text) = '') then () else tokenize($text, '\s+')" as="xs:string*"/>
 		<xsl:variable name="nwords" select="count($words)" as="xs:integer"/>
 		
 		<xsl:value-of
@@ -248,9 +248,13 @@
 	</xd:doc>
 	<xsl:function name="verbatim:meaningful-text-children" as="xs:boolean">
 		<xsl:param name="node" as="element()"/>
-		<xsl:value-of
-			select="if ($node/text()) then some $x in $node/child::text() satisfies not(normalize-space($x) = '') else false()"
-		/>
+		
+		<xsl:variable name="text-nodes" select="$node/text()"/>
+		
+		<xsl:variable name="text" select="replace(string-join($text-nodes, ''), '[\p{Z}\s]','')"/>
+		
+		<xsl:sequence select="not($text = '')"/>
+	
 	</xsl:function>
 	
 	
@@ -264,13 +268,19 @@
 				value is empty) then the function returns true. </xd:p>
 		</xd:desc>
 		<xd:param name="node">The node to be tested.</xd:param>
-		<xd:result><xd:b>true()</xd:b> if the node has meaningful text siblings and <xd:b>false()</xd:b> otherwise.</xd:result>		
+		<xd:return><xd:b>true()</xd:b> if the node has meaningful text siblings and <xd:b>false()</xd:b> otherwise.</xd:return>		
 	</xd:doc>
 	<xsl:function name="verbatim:meaningful-text-siblings" as="xs:boolean">
 		<xsl:param name="node" as="node()"/>
-		<xsl:value-of
-			select="some $sib in ($node/preceding-sibling::text(), $node/following-sibling::text()) satisfies (normalize-space($sib) != '')"
-		/>
+		
+		<xsl:variable name="preceding-text-nodes" select="$node/preceding-sibling::text()"/>
+		<xsl:variable name="following-text-nodes" select="$node/following-sibling::text()"/>
+		
+		<xsl:variable name="preceding-text" select="replace(string-join($preceding-text-nodes, ''), '[\p{Z}\s]','')"/>
+		<xsl:variable name="following-text" select="replace(string-join($following-text-nodes, ''), '[\p{Z}\s]','')"/>
+		
+		<xsl:sequence select="not($preceding-text = '' and $following-text = '')"/>
+		
 	</xsl:function>
 	
 	<xd:doc>
@@ -283,12 +293,24 @@
 				value is empty) then the function returns true. </xd:p>
 		</xd:desc>
 		<xd:param name="node">The node to be tested.</xd:param>
-		<xd:result><xd:b>true()</xd:b> if the node has meaningful following text siblings and <xd:b>false()</xd:b> otherwise.</xd:result>		
+		<xd:return><xd:b>true()</xd:b> if the node has meaningful following text siblings and <xd:b>false()</xd:b> otherwise.</xd:return>		
 	</xd:doc>	<xsl:function name="verbatim:meaningful-following-siblings" as="xs:boolean">
 		<xsl:param name="node" as="node()"/>
-		<xsl:value-of
-			select="some $sib in ($node/following-sibling::node()) satisfies not($sib[self::text()] and normalize-space($sib) = '')"/>
+		<xsl:sequence select="not(normalize-space(string-join($node/following-sibling::text(), '')) = '')"/>
 	</xsl:function>
 	
-
+	
+	<xd:doc>
+		<xd:desc>
+			<xd:p>Replace multiple whitespaces with a single space - like normalize but without removing leading
+			and trailing space completely.</xd:p>
+		</xd:desc>
+		<xd:param name="text">The string to be modified</xd:param>
+		<xd:return>The modified string</xd:return>
+	</xd:doc>
+	<xsl:function name="verbatim:normalize-space" as="xs:string">
+		<xsl:param name="text" as="xs:string"/>
+		<xsl:sequence select="replace($text, '\s+', ' ')"/>
+	</xsl:function>
+	
 </xsl:stylesheet>

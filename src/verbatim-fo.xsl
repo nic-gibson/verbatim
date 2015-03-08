@@ -68,7 +68,6 @@
 	<xsl:attribute-set name="verbatim:fo-defaults" >
 		<xsl:attribute name="color">#333333</xsl:attribute>
 		<xsl:attribute name="font-family">monospace</xsl:attribute>
-		<xsl:attribute name="font-size">90%</xsl:attribute>
 	</xsl:attribute-set>
 
 	<xsl:attribute-set name="verbatim:fo-element-name">

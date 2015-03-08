@@ -129,6 +129,8 @@
 		<span class="{$verbatim:element-class}">
 			<xsl:next-match/>
 		</span>
+		<xsl:text>&#x0A;</xsl:text>
+		
 	</xsl:template>
 
 	<xd:doc>
@@ -286,7 +288,7 @@
 		</xd:desc>
 	</xd:doc>
 	<xsl:template match="node()" mode="verbatim:indent">
-		<xsl:variable name="content" as="xs:string?">
+		<xsl:variable name="content" as="xs:string">
 			<xsl:next-match/>
 		</xsl:variable>
 		<xsl:if test="not($content = '')">
