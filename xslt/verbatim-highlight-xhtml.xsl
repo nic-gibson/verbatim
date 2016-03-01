@@ -2,13 +2,10 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim"
 	xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:saxon="http://saxon.sf.net/" xmlns:pkg="http://expath.org/ns/pkg"
-	exclude-result-prefixes="xs xd verbatim saxon pkg" version="2.0">
+	xmlns:saxon="http://saxon.sf.net/"
+	exclude-result-prefixes="xs xd verbatim saxon" version="2.0">
 
-	<xsl:import href="verbatim-xhtml.xsl"/>
-
-	<pkg:import-uri>http://www.corbas.co.uk/xmlverbatim/highlight-xhtml</pkg:import-uri>
-
+  <xsl:import href="http://xml.corbas.co.uk/xml/xslt/verbatim/verbatim-xhtml.xsl"/>
 
 
 	<xd:doc scope="stylesheet">
@@ -19,11 +16,13 @@
 			</xd:b>
 
 			<xd:p>
-				<xd:i>Version 1.0</xd:i>
+				<xd:i>Version 1.0.1</xd:i>
 			</xd:p>
 			<xd:p>Contributors: Nic Gibson</xd:p>
 			<xd:p>Copyright 2014 Corbas Consulting Ltd</xd:p>
 			<xd:p>Contact: corbas@corbas.co.uk</xd:p>
+		  
+		  <xd:p>v 1.0.1 - updated function available based code to actually work as intended</xd:p>
 
 
 			<xd:p>XML to "escaped" xhtml with configurability. Generates XHTML with styling and
@@ -93,17 +92,23 @@
 		<xd:param name="matching-nodes">The <xd:i>matching-nodes</xd:i> parameter provides
 		the set of nodes to be highlighted when processing output.</xd:param>
 	</xd:doc>
-	<xsl:template match="node()" mode="verbatim">
+	<xsl:template match="node()" mode="verbatim" use-when="function-available('saxon:evaluate')">
 		<xsl:param name="highlight-xpath" as="xs:string" select="''"/>
 		<xsl:param name="matching-nodes"
-			select="if ($highlight-xpath) then 
-				if (function-available('saxon:evaluate')) then saxon:evaluate($highlight-xpath, .) else () 
-				else ()"
-			as="item()*"/>
+			select="saxon:evaluate($highlight-xpath, .)" as="item()*"/>
 		<xsl:next-match>
 			<xsl:with-param name="highlight-matching-nodes" select="$matching-nodes" tunnel="yes"/>
 		</xsl:next-match>
 	</xsl:template>
+  
+  <xsl:template match="node()" mode="verbatim" use-when="not(function-available('saxon:evaluate'))">
+    <xsl:param name="highlight-xpath" as="xs:string" select="''"/>
+    <xsl:param name="matching-nodes" select="()" as="item()*"/>
+    <xsl:next-match>
+      <xsl:with-param name="highlight-matching-nodes" select="$matching-nodes" tunnel="yes"/>
+    </xsl:next-match>
+  </xsl:template>
+  
 
 	<xd:doc>
 		<xd:p>Match against any node and, if the node is in the
