@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="file:/Applications/oxygen/frameworks/xspec/src/compiler/format-xspec-report.xsl"?>
+<x:report xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:test="http://www.jenitennison.com/xslt/unit-test"
+          xmlns:x="http://www.jenitennison.com/xslt/xspec"
+          xmlns:pkg="http://expath.org/ns/pkg"
+          xmlns:impl="urn:x-xspec:compile:xslt:impl"
+          xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim"
+          stylesheet="file:/Users/nicg/Projects/xmlverbatim/src/verbatim-base.xsl"
+          date="2014-07-10T11:51:36.33+02:00">
+   <x:scenario>
+      <x:label>Element names</x:label>
+      <x:scenario>
+         <x:label>Element with no namespace</x:label>
+         <x:context mode="verbatim:name" select="/">
+            <x:param name="suppressed-namespaces"
+                     as="xs:anyURI*"
+                     select="for $u in ('http://www.w3.org/1999/XSL/Transform',       'http://www.w3.org/2001/XMLSchema',      'http://www.jenitennison.com/xslt/unit-test', 'http://www.jenitennison.com/xslt/xspec',      'http://expath.org/ns/pkg', 'urn:x-xspec:compile:xslt:impl',      'http://www.corbas.co.uk/ns/verbatim') return xs:anyURI($u)"/>
+            <foo/>
+         </x:context>
+         <x:result select="/node()">foo</x:result>
+         <x:test successful="true">
+            <x:label>element name (foo)</x:label>
+            <x:expect select="/node()">foo</x:expect>
+         </x:test>
+      </x:scenario>
+      <x:scenario>
+         <x:label>Element with default namespace</x:label>
+         <x:context mode="verbatim:name" select="/">
+            <x:param name="suppressed-namespaces"
+                     as="xs:anyURI*"
+                     select="for $u in ('http://www.w3.org/1999/XSL/Transform',       'http://www.w3.org/2001/XMLSchema',      'http://www.jenitennison.com/xslt/unit-test', 'http://www.jenitennison.com/xslt/xspec',      'http://expath.org/ns/pkg', 'urn:x-xspec:compile:xslt:impl',      'http://www.corbas.co.uk/ns/verbatim') return xs:anyURI($u)"/>
+            <foo xmlns="http://www.corbas.co.uk/ns/dummy"/>
+         </x:context>
+         <x:result select="/node()">foo</x:result>
+         <x:test successful="true">
+            <x:label>element name without prefix (foo)</x:label>
+            <x:expect select="/node()">foo</x:expect>
+         </x:test>
+      </x:scenario>
+      <x:scenario>
+         <x:label>Element with non default namespace</x:label>
+         <x:context mode="verbatim:name" select="/*/*">
+            <x:param name="suppressed-namespaces"
+                     as="xs:anyURI*"
+                     select="for $u in ('http://www.w3.org/1999/XSL/Transform',       'http://www.w3.org/2001/XMLSchema',      'http://www.jenitennison.com/xslt/unit-test', 'http://www.jenitennison.com/xslt/xspec',      'http://expath.org/ns/pkg', 'urn:x-xspec:compile:xslt:impl',      'http://www.corbas.co.uk/ns/verbatim') return xs:anyURI($u)"/>
+            <foo xmlns="http://www.corbas.co.uk/ns/dummy"
+                 xmlns:test="http://www.corbas.co.uk/ns/test">
+               <test:bar/>
+            </foo>
+         </x:context>
+         <x:result select="/node()">test:bar</x:result>
+         <x:test successful="true">
+            <x:label>element name with prefix (test:bar)</x:label>
+            <x:expect select="/node()">test:bar</x:expect>
+         </x:test>
+      </x:scenario>
+   </x:scenario>
+   <x:scenario>
+      <x:label>Attributes</x:label>
+      <x:scenario>
+         <x:label>simple attribute</x:label>
+         <x:context mode="verbatim:node" select="/foo/@bar">
+            <x:param name="suppressed-namespaces"
+                     as="xs:anyURI*"
+                     select="for $u in ('http://www.w3.org/1999/XSL/Transform',      'http://www.w3.org/2001/XMLSchema',     'http://www.jenitennison.com/xslt/unit-test', 'http://www.jenitennison.com/xslt/xspec',     'http://expath.org/ns/pkg', 'urn:x-xspec:compile:xslt:impl',     'http://www.corbas.co.uk/ns/verbatim') return xs:anyURI($u)"/>
+            <foo bar="1"/>
+         </x:context>
+         <x:result select="/node()">
+            <test:ws> </test:ws>bar="1"</x:result>
+         <x:test successful="true">
+            <x:label>attribute name/value (bar="1")</x:label>
+            <x:expect select="/node()"> bar="1"</x:expect>
+         </x:test>
+      </x:scenario>
+      <x:scenario>
+         <x:label>namespaced attribute</x:label>
+         <x:context mode="verbatim:node" select="/foo/@*:bar">
+            <x:param name="suppressed-namespaces"
+                     as="xs:anyURI*"
+                     select="for $u in ('http://www.w3.org/1999/XSL/Transform',       'http://www.w3.org/2001/XMLSchema',      'http://www.jenitennison.com/xslt/unit-test', 'http://www.jenitennison.com/xslt/xspec',      'http://expath.org/ns/pkg', 'urn:x-xspec:compile:xslt:impl',      'http://www.corbas.co.uk/ns/verbatim') return xs:anyURI($u)"/>
+            <foo xmlns:bar="http://www.corbas.co.uk/ns/test" bar:bar="sheep"/>
+         </x:context>
+         <x:result select="/node()">
+            <test:ws> </test:ws>bar:bar="sheep"</x:result>
+         <x:test successful="true">
+            <x:label>attribute name/value (bar="1")</x:label>
+            <x:expect select="/node()"> bar:bar="sheep"</x:expect>
+         </x:test>
+      </x:scenario>
+   </x:scenario>
+   <x:scenario>
+      <x:label>Processing instructions</x:label>
+      <x:scenario>
+         <x:label>Full PI rendering</x:label>
+         <x:context mode="verbatim:node" select="//processing-instruction()">
+            <dummy><?testpi x="y"?></dummy>
+         </x:context>

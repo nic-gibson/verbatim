@@ -188,7 +188,7 @@
 		<xd:return>A string consisting of the value of <xd:b>input</xd:b> replicated
 		<xd:b>count</xd:b> times.</xd:return>
 	</xd:doc>
-	<xsl:function name="verbatim:replicate-string" as="xs:string">
+	<xsl:function name="verbatim:replicate-string" as="xs:string*">
 		<xsl:param name="input" as="xs:string"/>
 		<xsl:param name="count" as="xs:integer"/>
 		<xsl:value-of select="string-join(verbatim:replicate($input, $count), '')"/>
