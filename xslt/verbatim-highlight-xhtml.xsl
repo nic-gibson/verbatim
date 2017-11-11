@@ -5,7 +5,7 @@
 	xmlns:saxon="http://saxon.sf.net/"
 	exclude-result-prefixes="xs xd verbatim saxon" version="2.0">
 
-  <xsl:import href="http://xml.corbas.co.uk/xml/xslt/verbatim/verbatim-xhtml.xsl"/>
+  <xsl:import href="verbatim-xhtml.xsl"/>
 
 
 	<xd:doc scope="stylesheet">
