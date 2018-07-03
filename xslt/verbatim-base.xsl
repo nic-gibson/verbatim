@@ -3,6 +3,22 @@
 	xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl"
 	xmlns:verbatim="http://www.corbas.co.uk/ns/verbatim" xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xd verbatim xs">
+
+	<!--
+	* Copyright 2009-2018 Corbas Consulting Ltd
+	*
+	* Licensed under the Apache License, Version 2.0 (the "License");
+	* you may not use this file except in compliance with the License.
+	* You may obtain a copy of the License at
+	*
+	*    http://www.apache.org/licenses/LICENSE-2.0
+	*
+	* Unless required by applicable law or agreed to in writing, software
+	* distributed under the License is distributed on an "AS IS" BASIS,
+	* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	* See the License for the specific language governing permissions and
+	* limitations under the License.
+	-->
 	
   <xsl:import href="functions.xsl"/>
 	
@@ -35,34 +51,6 @@
 
 			<xd:p>XML to "escaped" html with configurability. Generates XHTML with styling and
 				override options through modularity. </xd:p>
-
-			<xd:p>
-				<xd:b>License Terms</xd:b>
-			</xd:p>
-
-			<xd:p>This program and accompanying files are copyright 2013, 2014 Corbas Consulting
-				Ltd.</xd:p>
-
-			<xd:p>This program is free software: you can redistribute it and/or modify it under the
-				terms of the GNU General Public License as published by the Free Software
-				Foundation, either version 3 of the License, or (at your option) any later
-				version.</xd:p>
-
-			<xd:p>This program is distributed in the hope that it will be useful, but WITHOUT ANY
-				WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-				PARTICULAR PURPOSE. See the GNU General Public License for more details.</xd:p>
-
-			<xd:p>You should have received a copy of the GNU General Public License along with this
-				program. If not, see http://www.gnu.org/licenses/.</xd:p>
-
-			<xd:p>
-				<xd:b>Corbas Consulting Clients and Customers</xd:b>
-			</xd:p>
-
-			<xd:p>If your organisation or company are a customer or client of Corbas Consulting Ltd
-				you may be able to use and/or distribute this software under a different license. If
-				you are not aware of any such agreement and wish to agree other license terms you
-				must contact Corbas Consulting Ltd by email at corbas@corbas.co.uk.</xd:p>
 
 		</xd:desc>
 
